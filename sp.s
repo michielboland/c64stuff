@@ -8,6 +8,7 @@ ylo      = 253
 yhi      = 254 ; unused for now
 sp       = 2040
 joytmp   = sp-1
+joysav   = sp-2
 
 cra      = $dc0d
 spbase   = 11*64
@@ -23,6 +24,7 @@ vicirq   = 53273
 vicirqm  = 53274
 vicsexx  = 53277
 vicssc   = 53278
+vicec    = 53280
 vicbc    = 53281
 vics0c   = 53287
 
@@ -61,6 +63,7 @@ cls1
   lda #12
   sta vics0c
   lda #1
+  sta vicec
   sta vicbc
   sei
   lda #127
@@ -129,9 +132,10 @@ wait2
   cmp #56
   bcc wait2
 
+.l1
   lda joy
   cmp joy
-  bne irq
+  bne .l1
 
   sta joytmp
 
@@ -186,6 +190,17 @@ right1
   bne notright
   inc xhi
 notright
+  lda #16
+  bit joytmp
+  bne nofire
+  lda #16
+  bit joysav
+  beq nofire
+  inc vicec
+  inc vicbc
+nofire
+  lda joytmp
+  sta joysav
   jsr setsp
   lda vicssc
   lda #4
