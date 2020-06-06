@@ -24,7 +24,6 @@ vicirq   = 53273
 vicirqm  = 53274
 vicsexx  = 53277
 vicssc   = 53278
-vicec    = 53280
 vicbc    = 53281
 vics0c   = 53287
 
@@ -60,11 +59,9 @@ cls1
   sta vicsxmsb
   sta vicsexy
   sta vicsexx
-  lda #12
-  sta vics0c
   lda #1
-  sta vicec
   sta vicbc
+  sta vics0c
   sei
   lda #127
   sta cra
@@ -196,8 +193,8 @@ notright
   lda #16
   bit joysav
   beq nofire
-  inc vicec
   inc vicbc
+  inc vics0c
 nofire
   lda joytmp
   sta joysav
