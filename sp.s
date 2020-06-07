@@ -7,8 +7,6 @@ xhi      = 252
 ylo      = 253
 yhi      = 254 ; unused for now
 sp       = 2040
-joytmp   = sp-1
-joysav   = sp-2
 
 cra      = $dc0d
 spbase   = 11*64
@@ -134,7 +132,16 @@ wait2
   cmp joy
   bne .l1
 
+  and #$1f
+  cmp joyprev
+  beq .l2
+  sta joyprev
+  bne nojoy
+.l2
   sta joytmp
+  cmp joysav
+  beq nojoy
+  sta joysav
 
   lda #1
   bit joytmp
@@ -190,17 +197,19 @@ notright
   lda #16
   bit joytmp
   bne nofire
-  lda #16
-  bit joysav
-  beq nofire
   inc vicbc
   inc vics0c
 nofire
-  lda joytmp
-  sta joysav
+nojoy
   jsr setsp
   lda vicssc
   lda #4
   sta vicirq
   jmp $ea31
+
+; data section
+
+joytmp  .byte 0
+joysav  .byte 0
+joyprev .byte 0
 
