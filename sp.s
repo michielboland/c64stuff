@@ -31,7 +31,7 @@ cls0
   sta spbase+2,x
   dex
   bne cls0
-  lda #%10110110
+  lda #%11111111
   sta spbase
   sta spbase+1
   sta spbase+2
@@ -57,9 +57,6 @@ cls1
   sta vicsxmsb
   sta vicsexy
   sta vicsexx
-  lda #1
-  sta vicbc
-  sta vics0c
   sei
   lda #127
   sta cra
@@ -143,69 +140,116 @@ wait2
   beq nojoy
   sta joysav
 
-  lda #1
-  bit joytmp
-  bne noup
-
-  dec ylo
-noup
-  lda #2
-  bit joytmp
-  bne nodown
-
-  inc ylo
-nodown
-  lda #4
-  bit joytmp
-  bne notleft
-
-  ldx xlo
-  cpx #0
-  bne left2
-  ldx xhi
-  beq left1
-  dex
-  stx 252
-  ldx #0
-  beq left2
-left1
-  ldx #1
-  stx xhi
-  ldx #248
-left2
-  dex
-  stx xlo
-notleft
-  lda #8
-  bit joytmp
-  bne notright
-
-  ldx xhi
-  beq right1
-  ldx xlo
-  cpx #247
-  bcc right1
-  ldx #0
-  stx xlo
-  stx xhi
-  beq notright
-right1
-  inc xlo
-  bne notright
-  inc xhi
-notright
   lda #16
   bit joytmp
   bne nofire
-  inc vicbc
-  inc vics0c
+  jsr fireup
+  jsr firedown
+  jsr fireleft
+  jsr fireright
+  jmp nojoy
 nofire
+  jsr nofireup
+  jsr nofiredown
+  jsr nofireleft
+  jsr nofireright
 nojoy
   jsr setsp
   lda vicssc
   lda #4
   sta vicirq
   jmp $ea31
+
+nofireup
+  lda #1
+  bit joytmp
+  bne .ret
+  dec ylo
+.ret
+  rts
+
+nofiredown
+  lda #2
+  bit joytmp
+  bne .ret
+  inc ylo
+.ret
+  rts
+
+nofireleft
+  lda #4
+  bit joytmp
+  bne .ret
+  ldx xlo
+  cpx #0
+  bne .left2
+  ldx xhi
+  beq .left1
+  dex
+  stx 252
+  ldx #0
+  beq .left2
+.left1
+  ldx #1
+  stx xhi
+  ldx #248
+.left2
+  dex
+  stx xlo
+.ret
+  rts
+
+nofireright
+  lda #8
+  bit joytmp
+  bne .ret
+  ldx xhi
+  beq .right1
+  ldx xlo
+  cpx #247
+  bcc .right1
+  ldx #0
+  stx xlo
+  stx xhi
+  beq .ret
+.right1
+  inc xlo
+  bne .ret
+  inc xhi
+.ret
+  rts
+
+fireup
+  lda #1
+  bit joytmp
+  bne .ret
+  dec vicbc
+.ret
+  rts
+
+firedown
+  lda #2
+  bit joytmp
+  bne .ret
+  inc vicbc
+.ret
+  rts
+
+fireleft
+  lda #4
+  bit joytmp
+  bne .ret
+  dec vics0c
+.ret
+  rts
+
+fireright
+  lda #8
+  bit joytmp
+  bne .ret
+  inc vics0c
+.ret
+  rts
 
 ; data section
 
