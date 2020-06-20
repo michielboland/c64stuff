@@ -5,6 +5,7 @@ cra      = $dc0d
 vicirq   = 53273
 vicirqm  = 53274
 cls      = $e544
+digits   = 1512
 
   jsr cls
   lda #15
@@ -81,6 +82,29 @@ skip2
   and #1
   ora #128
   sta 54276
+  lda counter
+  clc
+  sed
+  adc #1
+  sta counter
+  lda counter+1
+  adc #0
+  sta counter+1
+  lda counter+2
+  adc #0
+  sta counter+2
+  lda counter+3
+  adc #0
+  sta counter+4
+  cld
+  ldx #0
+  jsr display_counter
+  inx
+  jsr display_counter
+  inx
+  jsr display_counter
+  inx
+  jsr display_counter
   jmp $ea31
 
 setsp
@@ -116,6 +140,7 @@ toright
   inc dir,x
   jmp moveleft
 moveright
+  cld
   adc #1
   jmp storepos
 toleft
@@ -129,6 +154,7 @@ toleft
   dec dir,x
   jmp moveright
 moveleft
+  cld
   sbc #1
 storepos
   sta pos, x
@@ -148,6 +174,24 @@ clearsid
   lda #128
   sta 54276
   sta 54273
+  rts
+
+display_counter
+  txa
+  eor #7
+  asl
+  tay
+  lda counter, x
+  and #$f
+  ora #48
+  sta digits+1, y
+  lda counter, x
+  lsr
+  lsr
+  lsr
+  lsr
+  ora #48
+  sta digits,y
   rts
 
 pos
@@ -172,4 +216,9 @@ msb
 toggle
   .byte 0
 soundtoggle
+  .byte 0
+counter
+  .byte 0
+  .byte 0
+  .byte 0
   .byte 0
