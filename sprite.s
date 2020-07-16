@@ -1,15 +1,25 @@
   .include "bootstrap.s"
 
+cls = $e544
 spbase = 64 * 13
 
+  jsr cls
   sei
+  lda #<nmi
+  sta $fffa
+  lda #>nmi
+  sta $fffb
+  lda #<rst
+  sta $fffc
+  lda #>rst
+  sta $fffd
+  lda #<irq
+  sta $fffe
+  lda #>irq
+  sta $ffff
   lda #$7f
   sta $dc0d
   lda $dc0d
-  lda #<irq
-  sta $0314
-  lda #>irq
-  sta $0315
 
   ldx #46
 .l0
@@ -23,7 +33,7 @@ spbase = 64 * 13
   sta spbase + 1,x
   dex
   bne .l1
-  lda #%10110110
+  lda dot
   sta spbase
   sta spbase + 1
   ldx #7
@@ -33,12 +43,31 @@ spbase = 64 * 13
   dex
   bpl .l2
 
+  lda #$35
+  sta 1
   cli
 
-  rts
-
+  ; Rather roundabout way to ensure IRQ routine is executed at each of the
+  ; 7 possible places.
+  ; There is probably something shorter but I can't be bothered right now.
+.l3
+  lda (0,x)
+  lda (0,x)
+  lda (0,x)
+  lda (0,x)
+  lda (0,x)
+  lda (0,x)
+  lda (0,x)
+  clv
+  bvc .l3
+  brk
 irq
-  ldy #6
+  pha
+  txa
+  pha
+  tya
+  pha
+  ldy #9
 .l0
   dey
   bpl .l0
@@ -62,10 +91,28 @@ irq
   sta 1064,y
   lda #1
   sta $d019
-  jmp $ea31
+  pla
+  tay
+  pla
+  tax
+  pla
+  ; Pad irq routine to multiple of 7 cycles.
+  nop
+  bit 0
+  rti
+nmi
+  lda #$37
+  sta 1
+  brk
+rst
+  lda #$37
+  sta 1
+  jmp ($fffc)
 vic
-  .byte 28,51, 36,51, 44,51, 52,51, 60,51, 68,51, 76,51, 84,51
+  .byte 24,51, 32,51, 40,51, 48,51, 56,51, 64,51, 72,51, 80,51
   .byte 0, 27, 50, 0, 0, $ff, 8, 0, 20, 1, 1, 0, 0, 0, 0, 0
   .byte 14, 6, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1
 hex
   .byte '0','1','2','3','4','5','6','7','8','9',1,2,3,4,5,6
+dot ; 2296
+  .byte %10000000
