@@ -1,6 +1,7 @@
   .include "bootstrap.s"
 
-  lda #14
+  lda #12
+  sta 53280
   sta 53281
   lda #0
   sta 251
@@ -38,4 +39,4 @@ l1
   sta 254
   jmp l2
 end
-  beq end
+  .byte 2
