@@ -1,5 +1,5 @@
 PRG=crunch.prg border.prg sprite.prg sp.prg xhak.prg bc.prg colors.prg pal.prg \
-	motion.prg
+	motion.prg square.prg
 DEPENDS=bootstrap.s
 all: $(PRG)
 $(PRG): $(DEPENDS)
