@@ -23,20 +23,32 @@ cr = 13
   jsr cls
   lda #<s
   ldy #>s
-  ldx #20
+  ldx #17
 next
   jsr printline
   dex
   bne next
   rts
 printline
-  txa
-  pha
+  stx tmp
+  lda #<t
+  clc
+  cld
+  adc tmp
+  ldy #>t
+  bcc .l0
+  iny
+.l0
+  jsr print
   lda #<s
   ldy #>s
   jsr print
-  pla
-  tax
+  ldx tmp
   rts
+t
+  .byte "                 ", 0
 s
-  .byte rvs_on, "                     ", rvs_off, bar, cr, 0
+  .byte rvs_on, " ", rvs_off, "                    "
+  .byte rvs_on, bar, rvs_off, bar,  cr, 0
+tmp
+  .byte 0
