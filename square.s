@@ -39,4 +39,4 @@ printline
   tax
   rts
 s
-  .byte cr, " ", rvs_on, "                     ", rvs_off, bar, 0
+  .byte rvs_on, "                     ", rvs_off, bar, cr, 0
