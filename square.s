@@ -13,6 +13,7 @@ rvs_on = 18
 rvs_off = rvs_on + $80
 ; 3 pixels wide
 bar = 181
+bar2 = 182
 cr = 13
 
   lda #12
@@ -48,7 +49,7 @@ printline
 t
   .byte "                 ", 0
 s
-  .byte rvs_on, " ", rvs_off, "                    "
-  .byte rvs_on, bar, rvs_off, bar,  cr, 0
+  .byte rvs_on, "  ", bar2, rvs_off, "                  "
+  .byte rvs_on, bar, "  ", rvs_off,  cr, 0
 tmp
   .byte 0
