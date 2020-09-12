@@ -2,10 +2,10 @@
 
 cls = $e544
 
-  lda #1
+  lda #12
   sta 53280
   sta 53281
-  lda #15
+  lda #11
   sta 646
   jsr cls
   lda #101
