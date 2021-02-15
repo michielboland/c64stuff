@@ -48,7 +48,7 @@ loop
   sta vicec
   lda #15
   sta vicec
-  lda #10
+  lda #5
   sta vicec
   lda #12
   sta vicec
