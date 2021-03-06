@@ -3,7 +3,7 @@
 vicec    = 53280
 vicbc    = 53281
 
-  lda #12
+  lda #1
   sta vicec
   sta vicbc
   lda #0
@@ -51,11 +51,11 @@ end
   .endm
 
 line
-  BAR 1
-  BAR 7
-  BAR 3
+  BAR 13
+  BAR 15
   BAR 5
-  BAR 4
-  BAR 2
-  BAR 6
+  BAR 12
+  BAR 8
+  BAR 11
+  BAR 9
   BAR 0
