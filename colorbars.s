@@ -1,9 +1,14 @@
   .include "bootstrap.s"
 
+viccry   = 53265
+vicrc    = 53266
+vicirq   = 53273
+vicirqm  = 53274
 vicec    = 53280
 vicbc    = 53281
+icr      = 56333
 
-  lda #1
+  lda #0
   sta vicec
   sta vicbc
   lda #0
@@ -42,20 +47,67 @@ l1
   sta 254
   jmp l2
 end
-  beq end
+  sei
+  lda #$7f
+  sta icr
+  lda icr
+  lda #<nmi
+  sta $fffa
+  lda #>nmi
+  sta $fffb
+  lda #<irq
+  sta $fffe
+  lda #>irq
+  sta $ffff
+  lda #$35
+  sta 1
+  lda #151
+  sta vicrc
+  lda #27
+  sta viccry
+  lda #1
+  sta vicirq
+  sta vicirqm
+  cli
+loop
+  .rept 7
+  nop
+  .endr
+  bne loop
+
+irq
+  bit 0
+  .rept 6
+  nop
+  .endr
+  dec vicirq
+nmi
+  rti
 
   .macro BAR
-    .rept 5
+    .rept 2
     .byte \1
     .endr
   .endm
 
 line
-  BAR 13
-  BAR 15
-  BAR 5
   BAR 12
-  BAR 8
-  BAR 11
-  BAR 9
+  BAR 12
   BAR 0
+  BAR 1
+  BAR 2
+  BAR 3
+  BAR 4
+  BAR 5
+  BAR 6
+  BAR 7
+  BAR 8
+  BAR 9
+  BAR 10
+  BAR 11
+  BAR 12
+  BAR 13
+  BAR 14
+  BAR 15
+  BAR 12
+  BAR 12
