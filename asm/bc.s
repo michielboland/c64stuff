@@ -3,37 +3,29 @@
   ; 2020-04-03
 
 
-irqvec   = $0314
-joy      = $dc00
-joytmp   = 253
-color    = 254
-flag     = 704
-ta       = $dc04
-tasave   = 251
-cry      = 53265
-ec       = 53280
+irqvec    = $0314
+joy       = $dc00
+ta        = $dc04
+cry       = 53265
+ec        = 53280
+tadefault = 19655
 
   .include "bootstrap.s"
 
   sei
-  lda #199
-  sta tasave
+  lda tasave
   sta ta
-  lda #76
-  sta tasave+1
+  lda tasave+1
   sta ta+1
   lda #<irq
   sta irqvec
   lda #>irq
   sta irqvec+1
   cli
-  lda #0
-  sta color
+  lda color
   sta ec
   lda #11
   sta cry
-  lda #4
-  sta flag
   rts
 
 irq
@@ -72,36 +64,42 @@ noup
   sta tasave+1
   sta ta+1
 nodown
-  lda flag
+  lda #4
   bit joytmp
-  bne notleft
-  lda flag
-  eor #12
-  sta flag
+  bne noleft
+  lda #0
+  sta colorinc
+noleft
+  lda #8
+  bit joytmp
+  bne noright
+  lda colorinc
+  bne noright
+  lda #1
+  sta colorinc
   ldx color
   inx
-  cpx #endcolors-colors
-  bcc not9
-  ldx #0
-not9
   stx color
-  lda colors,x
-  sta ec
-notleft
+  stx ec
+noright
   lda #16
   bit joytmp
   bne nofire
 
-  lda #199
+  lda #<tadefault
   sta tasave
   sta ta
-  lda #76
+  lda #>tadefault
   sta tasave+1
   sta ta+1
 nofire
   jmp $ea31
 
-colors
-  .byte 0,6,9,2,11,4,8,14,12,5,10,3,15,7,13,1
-endcolors=*
-
+color
+  .byte 0
+colorinc
+  .byte 0
+joytmp
+  .byte 0
+tasave
+  .word tadefault
