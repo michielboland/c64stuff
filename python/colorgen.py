@@ -54,16 +54,19 @@ class Colorgen:
     # The left edge of pixel 0 is assumed to coincide with the
     # start of the horizontal sync. (The trigger point in the oscilloscope.)
     # For odd lines we replace the 'V' value by its negative. (PAL quirk)
-    def sample(self, p, odd=False):
+    def sample(self, p, odd=False, cycles=2):
+
+        samples = round(cycles / (self.fsc * self.xincr))
+
         o = int(round(self.pix * p / self.xincr) + len(self.scope_data) / 2)
-        y_avg = np.average(self.y_signal[o : o + self.samples - 1])
-        y_std = np.std(self.y_signal[o : o + self.samples - 1])
-        u_avg = np.average(self.u_signal[o : o + self.samples - 1])
-        u_std = np.std(self.u_signal[o : o + self.samples - 1])
-        v_avg = np.average(self.v_signal[o : o + self.samples - 1])
+        y_avg = np.average(self.y_signal[o : o + samples - 1])
+        y_std = np.std(self.y_signal[o : o + samples - 1])
+        u_avg = np.average(self.u_signal[o : o + samples - 1])
+        u_std = np.std(self.u_signal[o : o + samples - 1])
+        v_avg = np.average(self.v_signal[o : o + samples - 1])
         if odd:
             v_avg = -v_avg
-        v_std = np.std(self.v_signal[o : o + self.samples - 1])
+        v_std = np.std(self.v_signal[o : o + samples - 1])
         a = abs(u_avg + v_avg * 1j)
         phi = math.atan2(v_avg, u_avg)
         return {
@@ -202,16 +205,15 @@ class Colorgen:
 
         self.calc_yuv(0)
 
-        # take 2 cycles of fsc samples
-        self.samples = round(2 / (self.fsc * self.xincr))
-
         # pixels between start of hsync and somewhere stable in color burst
-        burst_pix = 60
+        burst_pix = 58
+        burst_cycles = 9
         if u64:
             burst_pix = 52
+            burst_cycles = 5
 
-        burst1 = self.sample(burst_pix - 504)
-        burst2 = self.sample(burst_pix)
+        burst1 = self.sample(burst_pix - 504, cycles=burst_cycles)
+        burst2 = self.sample(burst_pix, cycles=burst_cycles)
 
         # add burst1 and burst2 sections of unit circle.
         # This will make the adjusted angles exact opposite of each other
@@ -235,8 +237,8 @@ class Colorgen:
 
         self.sync = self.sample(18)
         # re-sample burst
-        self.burst1 = self.sample(burst_pix - 504)
-        self.burst2 = self.sample(burst_pix)
+        self.burst1 = self.sample(burst_pix - 504, cycles=burst_cycles)
+        self.burst2 = self.sample(burst_pix, cycles=burst_cycles)
 
         sync_level = self.sync["y_avg"]
         self.black_level = (self.burst1["y_avg"] + self.burst2["y_avg"]) / 2
@@ -274,10 +276,11 @@ class Colorgen:
     def plot(self):
         fig = plt.figure()
         ax = fig.add_subplot()
-        ax.plot(self.t, self.c_data, label="c", color="green")
-        ax.plot(self.t, self.y_signal, label="y", color="grey")
-        ax.plot(self.t, self.u_signal, label="u", color="blue")
-        ax.plot(self.t, self.v_signal, label="v", color="red")
+        x = self.t / self.pix
+        ax.plot(x, self.c_data, label="c", color="green")
+        ax.plot(x, self.y_signal, label="y", color="grey")
+        ax.plot(x, self.u_signal, label="u", color="blue")
+        ax.plot(x, self.v_signal, label="v", color="red")
         ax.legend()
         plt.ylim(-1, 1)
         plt.show()
