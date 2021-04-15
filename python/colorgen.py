@@ -23,6 +23,13 @@ class Colorgen:
     wg = 0.587
     wb = 0.114
 
+    def lowpass(self, s):
+        # This filter appears to yield the best results.
+        filter = signal.butter(
+            5, self.fsc / 2, fs=1 / self.xincr, output="sos"
+        )
+        return signal.sosfilt(filter, s)
+
     # Compute Y, U and V values from sample data
     #
     # If we have only one channel, assume the channel contains a composite
@@ -36,19 +43,16 @@ class Colorgen:
         s = np.multiply(
             self.c_data, 2 * np.sin(2 * np.pi * (self.fsc * self.t) + offset)
         )
-        # This filter appears to yield the best results.
-        lowpass = signal.butter(
-            5, self.fsc / 2, fs=1 / self.xincr, output="sos"
-        )
-        if self.channels == 2:
-            y = self.y_data
-        else:
-            y = signal.sosfilt(lowpass, self.y_data)
-        u = signal.sosfilt(lowpass, s)
-        v = signal.sosfilt(lowpass, c)
+        y = self.y_data
+        u = self.lowpass(s)
+        v = self.lowpass(c)
         self.y_signal = y
         self.u_signal = u
         self.v_signal = v
+
+    # convert pixel offset to offset in the sample data
+    def offset(self, p):
+        return int(round(self.pix * p / self.xincr) + len(self.scope_data) / 2)
 
     # Take a sample of the YUV data around pixel p
     # The left edge of pixel 0 is assumed to coincide with the
@@ -58,7 +62,7 @@ class Colorgen:
 
         samples = round(cycles / (self.fsc * self.xincr))
 
-        o = int(round(self.pix * p / self.xincr) + len(self.scope_data) / 2)
+        o = self.offset(p)
         y_avg = np.average(self.y_signal[o : o + samples - 1])
         y_std = np.std(self.y_signal[o : o + samples - 1])
         u_avg = np.average(self.u_signal[o : o + samples - 1])
@@ -193,8 +197,8 @@ class Colorgen:
             self.c_data = self.scope_data[:, 2]
         else:
             # composite video
-            self.y_data = self.scope_data[:, 1]
-            self.c_data = self.y_data
+            self.y_data = self.lowpass(self.scope_data[:, 1])
+            self.c_data = self.scope_data[:, 1] - self.y_data
 
         self.t = np.linspace(
             xstart,
