@@ -140,8 +140,12 @@ class Colorgen:
 
     def printsample(self, prefix, sample):
         y = 0.3 * (sample["y_avg"] - self.black_level) / self.sync_depth / 0.7
-        u = 0.15 * sample["u_avg"] / self.burst_amplitude / 0.7
-        v = 0.15 * sample["v_avg"] / self.burst_amplitude / 0.7
+        if self.burst_amplitude:
+            u = 0.15 * sample["u_avg"] / self.burst_amplitude / 0.7
+            v = 0.15 * sample["v_avg"] / self.burst_amplitude / 0.7
+        else:
+            u = 0
+            v = 0
         r, g, b, ok, vpp, phi = self.rgb(y, u, v)
         if ok:
             s = ""
@@ -248,6 +252,12 @@ class Colorgen:
         self.black_level = (self.burst1["y_avg"] + self.burst2["y_avg"]) / 2
         self.sync_depth = self.black_level - sync_level
         self.burst_amplitude = (self.burst1["a"] + self.burst2["a"]) / 2
+        if self.burst_amplitude < 0.1:
+            print("color burst amplitude below threshold")
+            self.y_data = self.scope_data[:, 1]
+            self.c_data = np.zeros(len(self.scope_data))
+            self.burst_amplitude = 0
+            self.calc_yuv(0)
 
     def print(self):
         self.printsample("sync", self.sync)
