@@ -286,7 +286,6 @@ class Colorgen:
         ax.plot(x, self.u_signal, label="u", color="blue")
         ax.plot(x, self.v_signal, label="v", color="red")
         ax.legend()
-        plt.ylim(-1, 1)
         plt.show()
 
 
