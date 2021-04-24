@@ -13,11 +13,11 @@ loop
   lda #0
   sta pb_shifted
   lda pb, x
-  lsr
+  lsr a
   ror pb_shifted
-  lsr
+  lsr a
   ror pb_shifted
-  lsr
+  lsr a
   ror pb_shifted
   sta pb_shifted + 1
 
