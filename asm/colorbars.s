@@ -13,7 +13,7 @@ rst_handler
   sta 53265
   lda #8
   sta 53270
-  lda #252
+  lda #28
   sta 53272
   ldx #0
 .clr
@@ -25,6 +25,11 @@ rst_handler
   sta $da00,x
   lda colors+$300,x
   sta $db00,x
+  lda #0
+  sta $0400,x
+  sta $0500,x
+  sta $0600,x
+  sta $0700,x
   inx
   bne .clr
 .loop
