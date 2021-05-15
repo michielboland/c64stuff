@@ -1,80 +1,113 @@
-; Ultimax
+  .include "bootstrap.s"
 
-* = $e000
+viccry   = 53265
+vicrc    = 53266
+vicirq   = 53273
+vicirqm  = 53274
+vicec    = 53280
+vicbc    = 53281
+icr      = 56333
 
-nmi_handler
-irq_handler
-  rti
-rst_handler
-  lda #12
-  sta 53280
-  sta 53281
-  lda #27
-  sta 53265
-  lda #8
-  sta 53270
-  lda #28
-  sta 53272
-  ldx #0
-.clr
-  lda colors,x
-  sta $d800,x
-  lda colors+$100,x
-  sta $d900,x
-  lda colors+$200,x
-  sta $da00,x
-  lda colors+$300,x
-  sta $db00,x
   lda #0
-  sta $0400,x
-  sta $0500,x
-  sta $0600,x
-  sta $0700,x
+  sta vicec
+  sta vicbc
+  lda #0
+  sta 251
+  sta 253
+  lda #4
+  sta 252
+  lda #216
+  sta 254
+  ldx #0
+l2
+  ldy #39
+l1
+  lda #160
+  sta (251),y
+  lda line,y
+  sta (253),y
+  dey
+  bpl l1
   inx
-  bne .clr
-.loop
-  jmp .loop
-
-; graphics
-* = $f000
-
-  .rept 8
-  .byte $ff
+  cpx #25
+  beq end
+  lda 251
+  clc
+  adc #40
+  sta 251
+  lda 252
+  adc #0
+  sta 252
+  lda 253
+  clc
+  adc #40
+  sta 253
+  lda 254
+  adc #0
+  sta 254
+  jmp l2
+end
+  sei
+  lda #$7f
+  sta icr
+  lda icr
+  lda #<nmi
+  sta $fffa
+  lda #>nmi
+  sta $fffb
+  lda #<irq
+  sta $fffe
+  lda #>irq
+  sta $ffff
+  lda #$35
+  sta 1
+  lda #151
+  sta vicrc
+  lda #27
+  sta viccry
+  lda #1
+  sta vicirq
+  sta vicirqm
+  cli
+loop
+  .rept 7
+  nop
   .endr
+  bne loop
 
-* = $f800
-colors
+irq
+  bit 0
+  .rept 6
+  nop
+  .endr
+  dec vicirq
+nmi
+  rti
+
   .macro BAR
     .rept 2
     .byte \1
     .endr
   .endm
 
-  .rept 25
-    BAR 12
-    BAR 12
-    BAR 0
-    BAR 1
-    BAR 2
-    BAR 3
-    BAR 4
-    BAR 5
-    BAR 6
-    BAR 7
-    BAR 8
-    BAR 9
-    BAR 10
-    BAR 11
-    BAR 12
-    BAR 13
-    BAR 14
-    BAR 15
-    BAR 12
-    BAR 12
-  .endr
-
-* = $fffa
-
-  .word nmi_handler
-  .word rst_handler
-  .word irq_handler
+line
+  BAR 12
+  BAR 12
+  BAR 0
+  BAR 1
+  BAR 2
+  BAR 3
+  BAR 4
+  BAR 5
+  BAR 6
+  BAR 7
+  BAR 8
+  BAR 9
+  BAR 10
+  BAR 11
+  BAR 12
+  BAR 13
+  BAR 14
+  BAR 15
+  BAR 12
+  BAR 12
