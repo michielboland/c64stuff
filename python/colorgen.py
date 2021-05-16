@@ -57,8 +57,8 @@ class Colorgen:
     # Take a sample of the YUV data around pixel p
     # The left edge of pixel 0 is assumed to coincide with the
     # start of the horizontal sync. (The trigger point in the oscilloscope.)
-    # For odd lines we replace the 'V' value by its negative. (PAL quirk)
-    def sample(self, p, odd=False, cycles=2):
+    # flip: change sign of V (PAL quirk)
+    def sample(self, p, flip=False, cycles=2):
 
         samples = round(cycles / (self.fsc * self.xincr))
 
@@ -68,7 +68,7 @@ class Colorgen:
         u_avg = np.average(self.u_signal[o : o + samples - 1])
         u_std = np.std(self.u_signal[o : o + samples - 1])
         v_avg = np.average(self.v_signal[o : o + samples - 1])
-        if odd:
+        if flip:
             v_avg = -v_avg
         v_std = np.std(self.v_signal[o : o + samples - 1])
         a = abs(u_avg + v_avg * 1j)
@@ -110,8 +110,8 @@ class Colorgen:
     # This method also returns whether the input actually fitted in that
     # range.
     @staticmethod
-    def norm(a):
-        r = round(255 * a)
+    def norm(a, offset=0, factor=255):
+        r = round(offset + factor * a)
         ok = True
         if r < 0:
             r = 0
@@ -134,9 +134,14 @@ class Colorgen:
         r, rok = cls.norm(ri)
         g, gok = cls.norm(gi)
         b, bok = cls.norm(bi)
-        vpp = 2 * math.sqrt(u ** 2 + v ** 2) * 0.7
-        phi = 180 * math.atan2(v, u) / math.pi
-        return r, g, b, rok and gok and bok, vpp, phi
+        return r, g, b, rok and gok and bok
+
+    @classmethod
+    def ycbcr(cls, y, u, v):
+        yo, yok = cls.norm(y, 16, 219)
+        cb, cbok = cls.norm(u * 0.564 / 0.492, 128, 224)
+        cr, crok = cls.norm(v * 0.713 / 0.877, 128, 224)
+        return yo, cb, cr, yok and cbok and crok
 
     def printsample(self, prefix, sample):
         y = 0.3 * (sample["y_avg"] - self.black_level) / self.sync_depth / 0.7
@@ -146,23 +151,30 @@ class Colorgen:
         else:
             u = 0
             v = 0
-        r, g, b, ok, vpp, phi = self.rgb(y, u, v)
+        r, g, b, ok = self.rgb(y, u, v)
         if ok:
             s = ""
         else:
             s = "X"
-        phi_adjusted = 180 * sample["phi"] / math.pi
+        phi = 180 * sample["phi"] / math.pi
+        # peak-to-peak color voltage adjusted for .3V color burst
+        vpp = 2 * abs(u + v * 1j) * .7
+        if vpp < 0.03:
+            phi = float("NaN")
+        y2, cb, cr, ycbcrok = self.ycbcr(y, u, v)
         print(
             f"{prefix:10}  "
-            f"{sample['y_avg']:6.3f} "
-            f"{sample['y_std']:6.3f}  "
-            f"{sample['u_avg']:6.3f} "
-            f"{sample['u_std']:6.3f}  "
-            f"{sample['v_avg']:6.3f} "
-            f"{sample['v_std']:6.3f}  "
-            f"{sample['a']:6.3f} "
-            f"{phi_adjusted:4.0f} "
-            f"#{r:02x}{g:02x}{b:02x} {s}"
+            f"{sample['y_avg']:5.2f} "
+            f"{sample['y_std']:5.2f}  "
+            f"{sample['u_avg']:5.2f} "
+            f"{sample['u_std']:5.2f}  "
+            f"{sample['v_avg']:5.2f} "
+            f"{sample['v_std']:5.2f} "
+            f"{sample['a']:5.2f}  "
+            f"ycbcr: {y2:3d} {cb:3d} {cr:3d} "
+            f"rgb: {r:02x}{g:02x}{b:02x} "
+            f"vpp: {vpp:.2f} "
+            f"angle: {phi:4.0f} {s}"
         )
 
     # Read samples and compute sync level and color phase.
@@ -264,10 +276,7 @@ class Colorgen:
         self.printsample("burst-1", self.burst1)
         self.printsample("burst-2", self.burst2)
 
-        # Apparently color burst is at -135 degrees on odd lines
-        # and +135 degrees on even lines.
-        # I may have this the wrong way around but that doesn't matter.
-        left_odd = self.burst1["v_avg"] < 0
+        left_flip = self.burst1["v_avg"] < 0
 
         # pixels between start of hsync and first black bar
         black_pix = 160
@@ -276,15 +285,16 @@ class Colorgen:
 
         for color in range(16):
             p = black_pix + 16 * color + 5
-            if left_odd:
-                odd_sample = self.sample(p - 504, True)
-                even_sample = self.sample(p, False)
+            if left_flip:
+                flipped_sample = self.sample(p - 504, True)
+                unflipped_sample = self.sample(p, False)
             else:
-                odd_sample = self.sample(p, True)
-                even_sample = self.sample(p - 504, False)
-            comb_sample = self.avgsample(even_sample, odd_sample)
-            self.printsample(f"{color:02d}_even", even_sample)
-            self.printsample(f"{color:02d}_odd", odd_sample)
+                flipped_sample = self.sample(p, True)
+                unflipped_sample = self.sample(p - 504, False)
+            comb_sample = self.avgsample(unflipped_sample, flipped_sample)
+            # On C64 flipped lines are always at even rasters
+            self.printsample(f"{color:02d}_even", flipped_sample)
+            self.printsample(f"{color:02d}_odd", unflipped_sample)
             self.printsample(f"{color:02d}_comb", comb_sample)
 
     def plot(self):
