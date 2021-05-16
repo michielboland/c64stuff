@@ -313,6 +313,9 @@ copystatus lda statusline,x
          lda #127
          sta $dc0d
          sta $dd0d
+         ; bugfix (28 years later)
+         ; clear pending CIA interrupt
+         bit $dc0d
          lda #5
          sta 53273
          sta 53274
