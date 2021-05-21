@@ -5,9 +5,17 @@ cra      = $dc0d
 vicirq   = 53273
 vicirqm  = 53274
 cls      = $e544
-digits   = 1512
+digits   = 1520
+digitcol = 55792
 
   jsr cls
+  ldy #7
+  lda #14
+  ; workaround color bug on old kernals
+.setcolor
+  sta digitcol,y
+  dey
+  bpl .setcolor
   lda #15
   sta 53269
   sta 53271
@@ -178,7 +186,7 @@ clearsid
 
 display_counter
   txa
-  eor #7
+  eor #3
   asl
   tay
   lda counter, x
