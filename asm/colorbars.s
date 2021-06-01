@@ -8,7 +8,7 @@ vicec    = 53280
 vicbc    = 53281
 icr      = 56333
 
-  lda #0
+  lda #12
   sta vicec
   sta vicbc
   lda #0
