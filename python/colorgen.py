@@ -158,7 +158,7 @@ class Colorgen:
             s = "X"
         phi = 180 * sample["phi"] / math.pi
         # peak-to-peak color voltage adjusted for .3V color burst
-        vpp = 2 * abs(u + v * 1j) * .7
+        vpp = 2 * abs(u + v * 1j) * 0.7
         if vpp < 0.03:
             phi = float("NaN")
         y2, cb, cr, ycbcrok = self.ycbcr(y, u, v)
