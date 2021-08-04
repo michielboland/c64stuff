@@ -7,7 +7,6 @@ rows = $9003
 rc = $9004
 mp = $9005
 ec = $900f
-offset = 34
 
   ; clear screen
   jsr $e55f
