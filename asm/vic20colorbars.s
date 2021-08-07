@@ -6,11 +6,23 @@ ec = $900f
 screen = $1e00
 color_ram = $9600
 
+space = $1200
+fill = $1210
+
 sp = 251
 cp = 253
 
 rows = 16
 columns = 28
+
+  ldx #15
+.l:
+  lda #0
+  sta space,x
+  lda #$ff
+  sta fill,x
+  dex
+  bpl .l
 
   lda #<screen
   sta sp
@@ -128,11 +140,3 @@ vm_data:
 
 color_data:
   .byte 2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5,6,6,6,6,7,7,7,7,8,8,8,8
-
-  *=$1200
-  .rept 16
-  .byte 0
-  .endr
-  .rept 16
-  .byte 255
-  .endr
