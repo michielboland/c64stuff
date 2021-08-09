@@ -18,6 +18,20 @@ class Colorgen:
     # length of pixel in seconds
     pix = 1 / (8 * phi0)
 
+    pix_per_line = 504
+
+    # pixels between start of hsync and somewhere stable in color burst
+    burst_pix = 58
+    burst_cycles = 9
+
+    # pixel at which to measure sync depth
+    sync_pix = 18
+
+    # pixels between start of hsync and first black bar
+    black_pix = 160
+
+    ncolors = 16
+
     # weights for yuv-to-rgb conversion
     wr = 0.299
     wg = 0.587
@@ -62,17 +76,29 @@ class Colorgen:
 
         samples = round(cycles / (self.fsc * self.xincr))
 
-        o = self.offset(p)
-        y_avg = np.average(self.y_signal[o : o + samples - 1])
-        y_std = np.std(self.y_signal[o : o + samples - 1])
-        u_avg = np.average(self.u_signal[o : o + samples - 1])
-        u_std = np.std(self.u_signal[o : o + samples - 1])
-        v_avg = np.average(self.v_signal[o : o + samples - 1])
-        if flip:
-            v_avg = -v_avg
-        v_std = np.std(self.v_signal[o : o + samples - 1])
-        a = abs(u_avg + v_avg * 1j)
-        phi = math.atan2(v_avg, u_avg)
+        o = min(max(self.offset(p), 0), self.y_signal.size - 1)
+        p = min(o + samples - 1, self.y_signal.size - 1)
+        if o < p:
+            y_avg = np.average(self.y_signal[o:p])
+            y_std = np.std(self.y_signal[o:p])
+            u_avg = np.average(self.u_signal[o:p])
+            u_std = np.std(self.u_signal[o:p])
+            v_avg = np.average(self.v_signal[o:p])
+            if flip:
+                v_avg = -v_avg
+            v_std = np.std(self.v_signal[o:p])
+            a = abs(u_avg + v_avg * 1j)
+            phi = math.atan2(v_avg, u_avg)
+        else:
+            nan = float("nan")
+            y_avg = nan
+            y_std = nan
+            u_avg = nan
+            u_std = nan
+            v_avg = nan
+            v_std = nan
+            a = nan
+            phi = nan
         return {
             "y_avg": y_avg,
             "y_std": y_std,
@@ -111,14 +137,18 @@ class Colorgen:
     # range.
     @staticmethod
     def norm(a, offset=0, factor=255):
-        r = round(offset + factor * a)
-        ok = True
-        if r < 0:
+        if math.isnan(a):
             r = 0
             ok = False
-        if r > 255:
-            r = 255
-            ok = False
+        else:
+            r = round(offset + factor * a)
+            ok = True
+            if r < 0:
+                r = 0
+                ok = False
+            if r > 255:
+                r = 255
+                ok = False
         return r, ok
 
     @classmethod
@@ -173,7 +203,7 @@ class Colorgen:
             f"{sample['a']:5.2f}  "
             f"ycbcr: {y2:3d} {cb:3d} {cr:3d} "
             f"rgb: {r:02x}{g:02x}{b:02x} "
-            f"vpp: {vpp:.2f} "
+            f"vpp: {vpp:4.2f} "
             f"angle: {phi:4.0f} {s}"
         )
 
@@ -183,9 +213,22 @@ class Colorgen:
     # fixed color carrier, then inspect the color burst for two successive
     # lines. From these values we can obtain the proper color carrier.
     # Finally we recalculate the U and V values using the adjusted carrier.
-    def process(self, file, u64):
+    def process(self, file, u64, vic20, no_chroma_agc):
 
-        self.u64 = u64
+        self.vic20 = vic20
+
+        if u64:
+            self.burst_pix = 52
+            self.burst_cycles = 5
+            self.black_pix = 162
+
+        if vic20:
+            self.pix = 1 / self.fsc
+            self.pix_per_line = 284
+            self.burst_pix = 28
+            self.black_pix = 48
+            self.ncolors = 14
+            self.sync_pix = 8
 
         with open(file) as f:
             # Some RIGOL-specific bits here.
@@ -225,15 +268,10 @@ class Colorgen:
 
         self.calc_yuv(0)
 
-        # pixels between start of hsync and somewhere stable in color burst
-        burst_pix = 58
-        burst_cycles = 9
-        if u64:
-            burst_pix = 52
-            burst_cycles = 5
-
-        burst1 = self.sample(burst_pix - 504, cycles=burst_cycles)
-        burst2 = self.sample(burst_pix, cycles=burst_cycles)
+        burst1 = self.sample(
+            self.burst_pix - self.pix_per_line, cycles=self.burst_cycles
+        )
+        burst2 = self.sample(self.burst_pix, cycles=self.burst_cycles)
 
         # add burst1 and burst2 sections of unit circle.
         # This will make the adjusted angles exact opposite of each other
@@ -255,15 +293,20 @@ class Colorgen:
 
         self.calc_yuv(adjustment)
 
-        self.sync = self.sample(18)
+        self.sync = self.sample(self.sync_pix)
         # re-sample burst
-        self.burst1 = self.sample(burst_pix - 504, cycles=burst_cycles)
-        self.burst2 = self.sample(burst_pix, cycles=burst_cycles)
+        self.burst1 = self.sample(
+            self.burst_pix - self.pix_per_line, cycles=self.burst_cycles
+        )
+        self.burst2 = self.sample(self.burst_pix, cycles=self.burst_cycles)
 
         sync_level = self.sync["y_avg"]
         self.black_level = (self.burst1["y_avg"] + self.burst2["y_avg"]) / 2
         self.sync_depth = self.black_level - sync_level
-        self.burst_amplitude = (self.burst1["a"] + self.burst2["a"]) / 2
+        if no_chroma_agc:
+            self.burst_amplitude = 0.15
+        else:
+            self.burst_amplitude = (self.burst1["a"] + self.burst2["a"]) / 2
         if self.burst_amplitude < 0.04:
             print("color burst amplitude below threshold")
             self.y_data = self.scope_data[:, 1]
@@ -278,24 +321,23 @@ class Colorgen:
 
         left_flip = self.burst1["v_avg"] < 0
 
-        # pixels between start of hsync and first black bar
-        black_pix = 160
-        if self.u64:
-            black_pix = 162
-
-        for color in range(16):
-            p = black_pix + 16 * color + 5
+        for color in range(self.ncolors):
+            p = self.black_pix + 16 * color + 5
             if left_flip:
-                flipped_sample = self.sample(p - 504, True)
+                flipped_sample = self.sample(p - self.pix_per_line, True)
                 unflipped_sample = self.sample(p, False)
             else:
                 flipped_sample = self.sample(p, True)
-                unflipped_sample = self.sample(p - 504, False)
+                unflipped_sample = self.sample(p - self.pix_per_line, False)
             comb_sample = self.avgsample(unflipped_sample, flipped_sample)
             # On C64 flipped lines are always at even rasters
             self.printsample(f"{color:02d}_even", flipped_sample)
             self.printsample(f"{color:02d}_odd", unflipped_sample)
             self.printsample(f"{color:02d}_comb", comb_sample)
+
+        if self.vic20:
+            white_sample = self.sample(-9, False)
+            self.printsample(f"white", white_sample)
 
     def plot(self):
         fig = plt.figure()
@@ -313,9 +355,11 @@ def main():
     argp = argparse.ArgumentParser()
     argp.add_argument("-f", "--file", required=True)
     argp.add_argument("--u64", action="store_true")
+    argp.add_argument("--vic20", action="store_true")
+    argp.add_argument("--no-chroma-agc", action="store_true")
     args = argp.parse_args()
     colorgen = Colorgen()
-    colorgen.process(args.file, args.u64)
+    colorgen.process(args.file, args.u64, args.vic20, args.no_chroma_agc)
     colorgen.print()
     colorgen.plot()
 
