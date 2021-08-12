@@ -32,6 +32,8 @@ class Colorgen:
 
     ncolors = 16
 
+    pix_per_bar = 16
+
     # weights for yuv-to-rgb conversion
     wr = 0.299
     wg = 0.587
@@ -226,9 +228,9 @@ class Colorgen:
             self.pix = 1 / self.fsc
             self.pix_per_line = 284
             self.burst_pix = 28
-            self.black_pix = 48
-            self.ncolors = 14
+            self.black_pix = 64
             self.sync_pix = 8
+            self.pix_per_bar = 12
 
         with open(file) as f:
             # Some RIGOL-specific bits here.
@@ -322,7 +324,7 @@ class Colorgen:
         left_flip = self.burst1["v_avg"] < 0
 
         for color in range(self.ncolors):
-            p = self.black_pix + 16 * color + 5
+            p = self.black_pix + self.pix_per_bar * color + 5
             if left_flip:
                 flipped_sample = self.sample(p - self.pix_per_line, True)
                 unflipped_sample = self.sample(p, False)
@@ -334,10 +336,6 @@ class Colorgen:
             self.printsample(f"{color:02d}_even", flipped_sample)
             self.printsample(f"{color:02d}_odd", unflipped_sample)
             self.printsample(f"{color:02d}_comb", comb_sample)
-
-        if self.vic20:
-            white_sample = self.sample(-9, False)
-            self.printsample(f"white", white_sample)
 
     def plot(self):
         fig = plt.figure()
