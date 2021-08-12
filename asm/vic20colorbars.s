@@ -7,20 +7,21 @@ screen = $1e00
 color_ram = $9600
 
 space = $1200
-fill = $1210
 
 sp = 251
 cp = 253
 
-rows = 16
-columns = 28
+rows = 17
+columns = 24
 
   ldx #15
 .l:
   lda #0
   sta space,x
+  lda #$f0
+  sta space+16,x
   lda #$ff
-  sta fill,x
+  sta space+32,x
   dex
   bpl .l
 
@@ -59,9 +60,9 @@ do_row:
   dex
   bne do_row
 
-  lda #6
+  lda #10
   sta $9000 ; horizontal centering
-  lda #14
+  lda #17
   sta $9001 ; vertical centering
   lda #columns | $80
   sta $9002
@@ -100,29 +101,28 @@ loop:
   nop
   nop
   nop
-  lda #$a8
-  sta ec
   nop
-  lda #$b8
-  sta ec
   nop
-  lda #$c8
+  lda #$19
   sta ec
-  nop
+  lda #$a9
+  sta ec
+  lda #$b9
+  sta ec
+  lda #$c9
+  sta ec
   lda #$d9
   sta ec
-  nop
   lda #$e9
   sta ec
-  nop
   lda #$f9
   sta ec
-  nop
   lda #$99
   sta ec
-  nop
-  lda #$08
+  lda #$09
   sta ec
+  nop
+  nop
   jmp loop
 
 delay:
@@ -135,8 +135,7 @@ delay:
   rts
 
 vm_data:
-  .byte 33,33,32,32,33,33,32,32,33,33,32,32,33,33,32,32,33,33,32,32,33,33,32,32
-  .byte 33,33,32,32
+  .byte 34,33,32,34,33,32,34,33,32,34,33,32,34,33,32,34,33,32,34,33,32,34,33,32
 
 color_data:
-  .byte 2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5,6,6,6,6,7,7,7,7,8,8,8,8
+  .byte 0,0,0,2,2,2,3,3,3,4,4,4,5,5,5,6,6,6,7,7,7,8,8,8
