@@ -8,36 +8,44 @@ from scipy import signal
 
 
 class Colorgen:
+    def __init__(self, ntsc=False, contrast=1.0, saturation=1.0):
+        self.ntsc = ntsc
+        if ntsc:
+            # color burst frequency
+            self.fsc = 315 / 88 * 1e6
+            # CPU clock frequency
+            self.phi0 = 2 * self.fsc / 7
+            self.pix_per_line = 520
+            # pixels between start of hsync and somewhere stable in color burst
+            self.burst_pix = 50
+        else:
+            self.fsc = 4433618.75
+            self.phi0 = 2 * self.fsc / 9
+            self.pix_per_line = 504
+            self.burst_pix = 58
 
-    # PAL color burst frequency
-    fsc = 4433618.75
+        # length of pixel in seconds
+        self.pix = 1 / (8 * self.phi0)
 
-    # CPU clock frequency
-    phi0 = 2 * fsc / 9
+        self.burst_cycles = 9
 
-    # length of pixel in seconds
-    pix = 1 / (8 * phi0)
+        # pixel at which to measure sync depth
+        self.sync_pix = 18
 
-    pix_per_line = 504
+        # pixels between start of hsync and first black bar
+        self.black_pix = 160
 
-    # pixels between start of hsync and somewhere stable in color burst
-    burst_pix = 58
-    burst_cycles = 9
+        self.ncolors = 16
 
-    # pixel at which to measure sync depth
-    sync_pix = 18
+        self.pix_per_bar = 16
 
-    # pixels between start of hsync and first black bar
-    black_pix = 160
+        # weights for yuv-to-rgb conversion
+        self.wr = 0.299
+        self.wg = 0.587
+        self.wb = 0.114
 
-    ncolors = 16
-
-    pix_per_bar = 16
-
-    # weights for yuv-to-rgb conversion
-    wr = 0.299
-    wg = 0.587
-    wb = 0.114
+        self.contrast = contrast
+        self.saturation = saturation
 
     def lowpass(self, s):
         # This filter appears to yield the best results.
@@ -153,44 +161,65 @@ class Colorgen:
                 ok = False
         return r, ok
 
-    @classmethod
-    def weighted_yuv_to_rgb(cls, y, u, v, wu, wv):
+    def weighted_yuv_to_rgb(self, y, u, v, wu, wv):
         r = y + (1 / wv) * v
-        g = y - (cls.wb / (wu * cls.wg)) * u - (cls.wr / (wv * cls.wg)) * v
+        g = y - (self.wb / (wu * self.wg)) * u - (self.wr / (wv * self.wg)) * v
         b = y + (1 / wu) * u
         return (r, g, b)
 
-    @classmethod
-    def rgb(cls, y, u, v):
-        ri, gi, bi = cls.weighted_yuv_to_rgb(y, u, v, 0.492, 0.877)
-        r, rok = cls.norm(ri)
-        g, gok = cls.norm(gi)
-        b, bok = cls.norm(bi)
+    def rgb(self, y, u, v):
+        ri, gi, bi = self.weighted_yuv_to_rgb(y, u, v, 0.492, 0.877)
+        r, rok = self.norm(ri)
+        g, gok = self.norm(gi)
+        b, bok = self.norm(bi)
         return r, g, b, rok and gok and bok
 
-    @classmethod
-    def ycbcr(cls, y, u, v):
-        yo, yok = cls.norm(y, 16, 219)
-        cb, cbok = cls.norm(u * 0.564 / 0.492, 128, 224)
-        cr, crok = cls.norm(v * 0.713 / 0.877, 128, 224)
+    def ycbcr(self, y, u, v):
+        yo, yok = self.norm(y, 16, 219)
+        cb, cbok = self.norm(u * 0.564 / 0.492, 128, 224)
+        cr, crok = self.norm(v * 0.713 / 0.877, 128, 224)
         return yo, cb, cr, yok and cbok and crok
 
     def printsample(self, prefix, sample):
-        y = 0.3 * (sample["y_avg"] - self.black_level) / self.sync_depth / 0.7
+        if self.ntsc:
+            blkref = 4.0 / 14.0
+            cref = 0.2
+        else:
+            blkref = 0.3
+            cref = 0.15
+        y = self.contrast * (
+            blkref
+            * (sample["y_avg"] - self.black_level)
+            / self.sync_depth
+            / (1 - blkref)
+        )
+        # FIXME this is incorrect for NTSC
         if self.burst_amplitude:
-            u = 0.15 * sample["u_avg"] / self.burst_amplitude / 0.7
-            v = 0.15 * sample["v_avg"] / self.burst_amplitude / 0.7
+            u = (
+                self.saturation
+                * cref
+                * sample["u_avg"]
+                / self.burst_amplitude
+                / (1 - blkref)
+            )
+            v = (
+                self.saturation
+                * cref
+                * sample["v_avg"]
+                / self.burst_amplitude
+                / (1 - blkref)
+            )
         else:
             u = 0
             v = 0
+        # peak-to-peak color voltage adjusted for color burst
+        vpp = 2 * abs(u + v * 1j) * (1 - blkref)
         r, g, b, ok = self.rgb(y, u, v)
         if ok:
             s = ""
         else:
             s = "X"
         phi = 180 * sample["phi"] / math.pi
-        # peak-to-peak color voltage adjusted for .3V color burst
-        vpp = 2 * abs(u + v * 1j) * 0.7
         if vpp < 0.03:
             phi = float("NaN")
         y2, cb, cr, ycbcrok = self.ycbcr(y, u, v)
@@ -275,20 +304,23 @@ class Colorgen:
         )
         burst2 = self.sample(self.burst_pix, cycles=self.burst_cycles)
 
-        # add burst1 and burst2 sections of unit circle.
-        # This will make the adjusted angles exact opposite of each other
+        if self.ntsc:
+            # Take average of color burst angles, then add 180 degrees
+            adjustment = (burst1["phi"] + burst2["phi"]) / 2 + math.pi
+        else:
+            # add burst1 and burst2 sections of unit circle.
+            # This will make the adjusted angles exact opposite of each other
 
-        adjustment = math.atan2(
-            -math.sin(burst1["phi"]) - math.sin(burst2["phi"]),
-            -math.cos(burst1["phi"]) - math.cos(burst2["phi"]),
-        )
-
-        # alternatively, just add the (u, v) vectors
-        # (should be the same ideally)
-        # adjustment = math.atan2(
-        #     -burst1["v_avg"] - burst2["v_avg"],
-        #     -burst1["u_avg"] - burst2["u_avg"],
-        # )
+            adjustment = math.atan2(
+                -math.sin(burst1["phi"]) - math.sin(burst2["phi"]),
+                -math.cos(burst1["phi"]) - math.cos(burst2["phi"]),
+            )
+            # alternatively, just add the (u, v) vectors
+            # (should be the same ideally)
+            # adjustment = math.atan2(
+            #     -burst1["v_avg"] - burst2["v_avg"],
+            #     -burst1["u_avg"] - burst2["u_avg"],
+            # )
 
         # re-apply filter with adjusted offset so that color burst is
         # more or less at -135 and +135 degrees
@@ -318,24 +350,27 @@ class Colorgen:
 
     def print(self):
         self.printsample("sync", self.sync)
-        self.printsample("burst-1", self.burst1)
-        self.printsample("burst-2", self.burst2)
+        self.printsample("burst_L", self.burst1)
+        self.printsample("burst_R", self.burst2)
 
         left_flip = self.burst1["v_avg"] < 0
 
         for color in range(self.ncolors):
             p = self.black_pix + self.pix_per_bar * color + 5
-            if left_flip:
-                flipped_sample = self.sample(p - self.pix_per_line, True)
-                unflipped_sample = self.sample(p, False)
+            if self.ntsc:
+                left_sample = self.sample(p - self.pix_per_line, False)
+                right_sample = self.sample(p, False)
             else:
-                flipped_sample = self.sample(p, True)
-                unflipped_sample = self.sample(p - self.pix_per_line, False)
-            comb_sample = self.avgsample(unflipped_sample, flipped_sample)
-            # On C64 flipped lines are always at even rasters
-            self.printsample(f"{color:02d}_even", flipped_sample)
-            self.printsample(f"{color:02d}_odd", unflipped_sample)
-            self.printsample(f"{color:02d}_comb", comb_sample)
+                if left_flip:
+                    left_sample = self.sample(p - self.pix_per_line, True)
+                    right_sample = self.sample(p, False)
+                else:
+                    left_sample = self.sample(p - self.pix_per_line, False)
+                    right_sample = self.sample(p, True)
+            comb_sample = self.avgsample(left_sample, right_sample)
+            self.printsample(f"{color:02d}_L", left_sample)
+            self.printsample(f"{color:02d}_R", right_sample)
+            self.printsample(f"{color:02d}_c", comb_sample)
 
     def plot(self):
         fig = plt.figure()
@@ -355,8 +390,13 @@ def main():
     argp.add_argument("--u64", action="store_true")
     argp.add_argument("--vic20", action="store_true")
     argp.add_argument("--no-chroma-agc", action="store_true")
+    argp.add_argument("--ntsc", action="store_true")
+    argp.add_argument("--contrast", type=float, default=1.0)
+    argp.add_argument("--saturation", type=float, default=1.0)
     args = argp.parse_args()
-    colorgen = Colorgen()
+    colorgen = Colorgen(
+        ntsc=args.ntsc, contrast=args.contrast, saturation=args.saturation
+    )
     colorgen.process(args.file, args.u64, args.vic20, args.no_chroma_agc)
     colorgen.print()
     colorgen.plot()
