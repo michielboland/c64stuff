@@ -166,10 +166,10 @@ right_fire
 done
   jmp $eabf
 
-ddrasave  = *
-ddrbsave  = * + 1
-joy_up    = * + 2
-joy_down  = * + 3
-joy_left  = * + 4
-joy_right = * + 5
-joy_fire  = * + 6
+ddrasave  .byte 0
+ddrbsave  .byte 0
+joy_up    .byte 0
+joy_down  .byte 0
+joy_left  .byte 0
+joy_right .byte 0
+joy_fire  .byte 0
