@@ -13,7 +13,7 @@ rst_handler
   sta 53265
   lda #8
   sta 53270
-  lda #252
+  lda #12
   sta 53272
   ldx #0
 .clr
@@ -32,8 +32,7 @@ rst_handler
 
 ; graphics
 * = $f000
-
-  .rept 8
+  .rept $800
   .byte $ff
   .endr
 
