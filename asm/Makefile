@@ -12,9 +12,7 @@ bump.prg: bump_sprite_data.s
 .PHONY: clean
 %.prg: %.s
 	vasm6502_oldstyle -dotdir -Fbin -o $@ $<
-color-squares.crt: color-squares.prg
-	cartconv -t ulti -i $< -o $@
-vicii-registers.crt: vicii-registers.prg
+%.crt: %.prg
 	cartconv -t ulti -i $< -o $@
 clean:
 	rm -f *.prg *.crt
