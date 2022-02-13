@@ -84,6 +84,8 @@ delay8
   bit 0
   nop
 skip4b
+  inc $900f
+  dec $900f
   ldx register
   lda $9000,x
   sta (p),y
