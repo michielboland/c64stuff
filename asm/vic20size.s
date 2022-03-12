@@ -8,17 +8,35 @@ via1ddra = $9113
 via2prb  = $9120
 via2ddrb = $9122
 
+  ldy #0
+cls
+  lda #160
+  sta $1e00,y
+  sta $1f00,y
+  tya
+  asl
+  rol
+  rol
+  and #3
+  sta $9600,y
+  ora #4
+  sta $9700,y
+  iny
+  bne cls
+
   sei
   lda #<irq
   sta $0314
   lda #>irq
   sta $0315
   cli
-  rts
+
+loop
+  jmp loop
 
 irq
   inc c
-  lda #3
+  lda #$0f
   bit c
   beq read
   jmp $eabf
