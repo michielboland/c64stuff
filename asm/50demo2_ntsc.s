@@ -113,7 +113,7 @@ ld:	dey
 	lda #>irq
 	sta irqvec+1
 
-	lda #64
+	lda #63
 	sta nlines
 	cli
 	rts
