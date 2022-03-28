@@ -254,10 +254,15 @@ class Colorgen:
             self.black_pix = 162
 
         if vic20:
-            self.pix = 1 / self.fsc
-            self.pix_per_line = 284
+            if self.ntsc:
+                self.pix = 7 / (8 * self.fsc)
+                self.pix_per_line = 260
+                self.black_pix = 50
+            else:
+                self.pix = 1 / self.fsc
+                self.pix_per_line = 284
+                self.black_pix = 64
             self.burst_pix = 28
-            self.black_pix = 64
             self.sync_pix = 8
             self.pix_per_bar = 12
 
