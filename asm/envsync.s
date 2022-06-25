@@ -22,15 +22,6 @@ env3  = 54300
   rts
 
 isr
-  ; Slight hack to position the border effect properly.
-  lda 53266
-.wait_for_new_raster
-  cmp 53266
-  beq .wait_for_new_raster
-  .rept 9
-  nop
-  .endr
-
   lda #1
   sta ctrl3
 
@@ -66,11 +57,74 @@ isr
   ; We are now synchronized to the envelope counter.
   ; FIXME do something more useful.
 
-  inc 53280
-  dec 53280
+  lda env3
+  sta 2024
+  lda env3
+  sta 2025
+  lda env3
+  sta 2026
+  lda env3
+  sta 2027
+  lda env3
+  sta 2028
+  lda env3
+  sta 2029
+  lda env3
+  sta 2030
+  lda env3
+  sta 2031
+  lda env3
+  sta 2032
+  lda env3
+  sta 2033
+  lda env3
+  sta 2034
+  lda env3
+  sta 2035
+  lda env3
+  sta 2036
+  lda env3
+  sta 2037
+  lda env3
+  sta 2038
+  lda env3
+  sta 2039
 
   lda #0
   sta ctrl3
+
+  lda 2
+  bne .l5
+  nop
+.l5
+
+  lda #0
+  sta 252
+  lda 2
+  clc
+  adc #1
+  and #$0f
+  sta 2
+  asl a
+  asl a
+  clc
+  adc 2
+  .rept 3
+  asl a
+  rol 252
+  .endr
+
+  sta 251
+  lda 252
+  clc
+  adc #4
+  sta 252
+  ldy #15
+.l4
+  lda 2024,y
+  sta (251),y
+  dey
+  bpl .l4
 
   lda #1
   sta 53273
