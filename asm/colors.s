@@ -162,6 +162,7 @@ raster
 rmin
   .word 0
 rmax
-  .word 311
+  ; safe for ntsc
+  .word 262
 joytmp
   .byte 255
