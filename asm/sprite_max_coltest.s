@@ -20,10 +20,10 @@ clr
   sta 53265
   lda #3
   sta 53269
-  lda #50
+  lda #63
   sta 53249
   sta 53251
-  lda #24
+  lda #38
   sta 53248
   sta 53250
   lda #0
@@ -44,7 +44,34 @@ clr
   cli
 loop
   jmp loop
+
 irq_handler
+
+  ; delay for at least one field so IRQs occur every other field
+  ; (NTSC has phase inverted because of odd number of lines)
+
+  lda #80
+.l1
+  cmp 53266
+  bne .l1
+  lda #79
+.l2
+  cmp 53266
+  bne .l2
+
+  lda #4
+  bit 56320
+  bne .noleft
+  dec 53248
+  dec 53250
+.noleft
+  asl
+  bit 56320
+  bne .noright
+  inc 53248
+  inc 53250
+
+.noright
   lsr 53273
   lda 53278
   rti
@@ -55,14 +82,14 @@ irq_handler
 
 * = $f800
 
-  .byte %11110000
-  .byte %01111000
   .byte %00111100
-  .byte %00011110
-  .byte %00001111
-  .byte %10000111
-  .byte %11000011
-  .byte %11100001
+  .byte %01100110
+  .byte %01101110
+  .byte %01101110
+  .byte %01100000
+  .byte %01100010
+  .byte %00111100
+  .byte %00000000
 
 * = $fff8
 
