@@ -117,7 +117,10 @@ ld:	dey
 	lda #112
 	sta nlines
 	cli
-	rts
+	; Later addition - you can replace this part
+	; with rts and remove everything from post onward
+	; to get the original back.
+	jmp post
 
 delay:	ldy #7
 l5:	dey
@@ -154,3 +157,43 @@ l8:	dec viccrx
 	lda #1
 	sta vicirq
 	jmp defirq
+
+	; Optional extra bits
+	; to illustrate problem with multi-color sprite
+	; at X-position $162
+
+post	lda #sprite>>6
+	sta 2040
+	lda #1
+	sta $d015
+	sta $d01c
+	sta $d010
+	lda #98
+	sta $d000
+	lda #0
+	sta $d001
+	sta $d017
+	sta $d01d
+	; Display 1-pixel wide black alternating bit pattern in
+	; the top 4 lines of the display. This can be sort-of used
+	; to make out which phase the dot clock is in relative to
+	; the main clock. (In 2 of the 4 phases the black lines are
+	; wider than the non-black, and in the other 2 phases the black
+	; lines are narrower.)
+	lda #31
+	sta viccry
+	lda #$aa
+	sta $3fff
+	rts
+
+	.align 6
+sprite
+	.rept 7
+	.byte 192,0,0
+	.endr
+	.rept 7
+	.byte 128,0,0
+	.endr
+	.rept 7
+	.byte 64,0,0
+	.endr
