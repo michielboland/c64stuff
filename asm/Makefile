@@ -4,11 +4,13 @@ PRG=crunch.prg border.prg sprite.prg sp.prg xhak.prg bc.prg colors.prg pal.prg \
 	comp.prg bump.prg vicii-registers.crt vic20colors.prg \
 	vic20colorbars.prg vic20colorbars_ntsc.prg vic20colors_ntsc.prg \
 	vic20rasterscan.prg vic20rasterscan_ntsc.prg 50demo2_ntsc.prg \
-	50demo3_ntsc.prg vic20size.prg test5.crt sprite_max_coltest.crt
+	50demo3_ntsc.prg vic20size.prg test5.crt sprite_max_coltest.crt \
+	vsp_tester.crt
 DEPENDS=bootstrap.s
 all: $(PRG)
 $(PRG): $(DEPENDS)
 bump.prg: bump_sprite_data.s
+vsp_tester.crt: binary_charset.s
 .PHONY: clean
 %.prg: %.s
 	vasm6502_oldstyle -dotdir -Fbin -o $@ $<
