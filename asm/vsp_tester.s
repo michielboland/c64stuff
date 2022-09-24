@@ -3,6 +3,7 @@
 * = $e000
 
 YOFFSET = 0
+YBITS = %01011000
 
   lda #128
   sta 54290
@@ -47,29 +48,48 @@ clr2
   sta 53266
   lda #28
   sta 53272
-  lda #14
+  lda #15
   sta 53280
-  lda #6
+  lda #0
   sta 53281
   lda #7
-  sta 53283
+  sta 53282
   lda #8
+  sta 53283
+  lda #9
   sta 53284
+  
 
   .macro DELAY
-  .rept 6
+  .rept 1
   nop
   .endr
   .endm
 
-  .macro SETY
+  .macro BADLINE
   lda #\1 + YOFFSET
   cmp 53266
   bne *-3
   DELAY
-  lda #((\2 + YOFFSET) & 7) | %01011000
-  sta 53282
+  lda #((\2 + YOFFSET) & 7) | YBITS
+  ldy #((\2 + \3 + YOFFSET) & 7) | YBITS | 32
+  sty 53265
+  sta 53281
   sta 53265
+  .endm
+
+  .macro IDLE
+  lda #\1 + YOFFSET
+  cmp 53266
+  bne *-3
+  DELAY
+  lda #((\2 + YOFFSET) & 7) | YBITS
+  sta 53265
+  .endm
+
+  .macro VSP
+  BADLINE \1, \1, \2
+  IDLE \1 + 7, \1 + 2
   .endm
 
 loop
@@ -79,51 +99,29 @@ loop
   bit 53265
   bmi *-3
 
-  SETY 48, 0
-  SETY 55, 2
-  SETY 57, 1
-  SETY 64, 3
-  SETY 66, 2
-  SETY 73, 4
-  SETY 75, 3
-  SETY 82, 5
-  SETY 84, 4
-  SETY 91, 6
-  SETY 93, 5
-  SETY 100, 7
-  SETY 102, 6
-  SETY 109, 0
-  SETY 111, 7
-  SETY 118, 1
-  SETY 120, 0
-  SETY 127, 2
-  SETY 129, 1
-  SETY 136, 3
-  SETY 138, 2
-  SETY 145, 4
-  SETY 147, 3
-  SETY 154, 5
-  SETY 156, 4
-  SETY 163, 6
-  SETY 165, 5
-  SETY 172, 7
-  SETY 174, 6
-  SETY 181, 0
-  SETY 183, 7
-  SETY 190, 1
-  SETY 192, 0
-  SETY 199, 2
-  SETY 201, 1
-  SETY 208, 3
-  SETY 210, 2
-  SETY 217, 4
-  SETY 219, 3
-  SETY 226, 5
-  SETY 228, 4
-  SETY 235, 6
-  SETY 237, 5
-  SETY 244, 7
-  SETY 246, 6
+  VSP 48, 1
+  VSP 57, 2
+  VSP 66, 3
+  VSP 75, 4
+  VSP 84, 5
+  VSP 93, 6
+  VSP 102, 7
+  VSP 111, 1
+  VSP 120, 2
+  VSP 129, 3
+  VSP 138, 4
+  VSP 147, 5
+  VSP 156, 6
+  VSP 165, 7
+  VSP 174, 1
+  VSP 183, 2
+  VSP 192, 3
+  VSP 201, 4
+  VSP 210, 5
+  VSP 219, 6
+  VSP 228, 7
+  VSP 237, 1
+  BADLINE 246, 6, 2
 
   jmp loop
 
