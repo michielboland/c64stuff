@@ -5,7 +5,7 @@ PRG=crunch.prg border.prg sprite.prg sp.prg xhak.prg bc.prg colors.prg pal.prg \
 	vic20colorbars.prg vic20colorbars_ntsc.prg vic20colors_ntsc.prg \
 	vic20rasterscan.prg vic20rasterscan_ntsc.prg 50demo2_ntsc.prg \
 	50demo3_ntsc.prg vic20size.prg test5.crt sprite_max_coltest.crt \
-	vsp_tester.crt
+	vsp_tester.crt vic20mix.prg
 DEPENDS=bootstrap.s
 all: $(PRG)
 $(PRG): $(DEPENDS)
