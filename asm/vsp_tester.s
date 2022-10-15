@@ -5,6 +5,12 @@
 YOFFSET = 3
 YBITS = %00011000
 
+cry = 53265
+rc  = 53266
+
+  lda #14
+  sta 53281
+
   ldx #0
 clr
   txa
@@ -19,12 +25,13 @@ clr
   sta $db00,x
   inx
   bne clr
+
   lda #8
   sta 53270
   lda #((YOFFSET + 1) & 7) | YBITS
-  sta 53265
+  sta cry
   lda #47
-  sta 53266
+  sta rc
   lda #28
   sta 53272
   lda #14
@@ -32,30 +39,34 @@ clr
   lda #6
   sta 53281
 
-  .macro DELAY
-  .rept 4
-  nop
-  .endr
-  .endm
+  ; Wait until a complete frame has been displayed initially
+  ; This way the SRAM in the VIC-II is guaranteed to contain
+  ; the last line displayed (as opposed to garbage)
+wait
+  bit cry
+  bpl *-3
+  bit cry
+  bmi *-3
 
   .macro BADLINE
   lda #\1 + YOFFSET
-  cmp 53266
+  cmp rc
   bne *-3
-  DELAY
+  nop
+  nop
+  nop
   lda #((\2 + YOFFSET) & 7) | YBITS
   ldy #((\2 + \3 + YOFFSET) & 7) | YBITS
-  sty 53265
-  sta 53265
+  sty cry
+  sta cry
   .endm
 
   .macro IDLE
   lda #\1 + YOFFSET
-  cmp 53266
+  cmp rc
   bne *-3
-  DELAY
   lda #((\2 + YOFFSET) & 7) | YBITS
-  sta 53265
+  sta cry
   .endm
 
   .macro VSP
@@ -64,12 +75,43 @@ clr
   .endm
 
 loop
-
-  bit 53265
+  bit cry
   bpl *-3
-  bit 53265
+  bit cry
   bmi *-3
 
+  ; sync to raster counter for predictable results
+sync
+  lda rc
+.l0:
+  cmp rc
+  beq .l0
+  jsr delay
+  lda rc
+  cmp rc
+  bne .l1
+  bit 0
+  nop
+.l1:
+  jsr delay
+  lda rc
+  cmp rc
+  beq *+2
+  beq *+2
+  jsr delay
+  lda rc
+  cmp rc
+  beq *+2
+
+  jmp top
+
+  ; each VSP block is 32 byte
+  ; align to make sure we don't cross
+  ; page boundaries in branch instructions
+
+  .align 5
+
+top
   VSP 48, 1
   VSP 57, 2
   VSP 66, 3
@@ -96,9 +138,18 @@ loop
   VSP 246, 2
   .endif
   lda #((YOFFSET + 1) & 7) | YBITS
-  sta 53265
+  sta cry
 
   jmp loop
+
+  .align 3
+delay
+  ldy #7
+.l0
+  dey
+  bne .l0
+  nop
+  rts
 
 * = $f000
   .include "binary_charset.s"
