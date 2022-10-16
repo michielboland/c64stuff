@@ -7,8 +7,10 @@ YBITS = %00011000
 
 cry = 53265
 rc  = 53266
+bg = 11
+fg = 12
 
-  lda #14
+  lda #fg
   sta 53281
 
   ldx #0
@@ -18,7 +20,7 @@ clr
   sta $0500,x
   sta $0600,x
   sta $0700,x
-  lda #14
+  lda #fg
   sta $d800,x
   sta $d900,x
   sta $da00,x
@@ -34,9 +36,9 @@ clr
   sta rc
   lda #28
   sta 53272
-  lda #14
+  lda #fg
   sta 53280
-  lda #6
+  lda #bg
   sta 53281
 
   ; Wait until a complete frame has been displayed initially
@@ -49,22 +51,20 @@ wait
   bmi *-3
 
   .macro BADLINE
-  lda #\1 + YOFFSET
-  cmp rc
-  bne *-3
-  nop
-  nop
-  nop
   lda #((\2 + YOFFSET) & 7) | YBITS
   ldy #((\2 + \3 + YOFFSET) & 7) | YBITS
+  ldx #\1 + YOFFSET
+  cpx rc
+  bne *-3
   sty cry
   sta cry
   .endm
 
   .macro IDLE
-  lda #\1 + YOFFSET
-  cmp rc
+  ldx #\1 + YOFFSET
+  cpx rc
   bne *-3
+  bit $ffff
   lda #((\2 + YOFFSET) & 7) | YBITS
   sta cry
   .endm
@@ -102,6 +102,8 @@ sync
   lda rc
   cmp rc
   beq *+2
+
+  bit 0
 
   jmp top
 
