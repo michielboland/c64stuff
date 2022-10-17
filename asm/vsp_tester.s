@@ -1,6 +1,6 @@
-; Ultimax
+; 8K cartridge
 
-* = $e000
+* = $8000
 
 YOFFSET = 3
 YBITS = %00011000
@@ -10,6 +10,18 @@ rc  = 53266
 bg = 11
 fg = 12
 
+  .word coldboot
+  .word warmboot
+  .byte $c3, $c2, $cd, $38, $30 ; CBM80
+
+coldboot
+  jsr $fd15 ; make restore work properly
+  lda #$03
+  sta $dd00
+  sta $dd02
+  cld
+
+warmboot
   lda #fg
   sta 53281
 
@@ -28,13 +40,29 @@ clr
   inx
   bne clr
 
+  ldx #$1f
+  ldy #$ff
+
+fill_idle
+  lda idle_data,x
+  sta $3800,y
+  tya
+  sec
+  sbc #8
+  tay
+  dex
+  bpl fill_idle
+
+  lda #0
+  sta $3fff
+
   lda #8
   sta 53270
   lda #((YOFFSET + 1) & 7) | YBITS
   sta cry
   lda #47
   sta rc
-  lda #28
+  lda #22
   sta 53272
   lda #fg
   sta 53280
@@ -77,6 +105,13 @@ wait
 loop
   bit cry
   bpl *-3
+
+  ; generate some grey dots
+  lda 53280
+  .rept 6
+  sta 53280
+  .endr
+
   bit cry
   bmi *-3
 
@@ -153,54 +188,44 @@ delay
   nop
   rts
 
-* = $f000
-  .include "binary_charset.s"
+  .align 5
+idle_data
+  .byte %00000001
+  .byte %00000010
+  .byte %00000100
+  .byte %00001000
+  .byte %00010000
+  .byte %00100000
+  .byte %01000000
+  .byte %10000000
 
-* = $f800
+  .byte %00000011
+  .byte %00000110
+  .byte %00001100
+  .byte %00011000
+  .byte %00110000
+  .byte %01100000
+  .byte %11000000
+  .byte %10000001
 
-  .macro B7
-  .byte 0,0,0,0,0,0,0,\1
-  .endm
+  .byte %00000111
+  .byte %00001110
+  .byte %00011100
+  .byte %00111000
+  .byte %01110000
+  .byte %11100000
+  .byte %11000001
+  .byte %10000011
 
-  B7 %00000001
-  B7 %00000010
-  B7 %00000100
-  B7 %00001000
-  B7 %00010000
-  B7 %00100000
-  B7 %01000000
-  B7 %10000000
+  .byte %00001111
+  .byte %00011110
+  .byte %00111100
+  .byte %01111000
+  .byte %11110000
+  .byte %11100001
+  .byte %11000011
+  .byte %10000111
 
-  B7 %00000011
-  B7 %00000110
-  B7 %00001100
-  B7 %00011000
-  B7 %00110000
-  B7 %01100000
-  B7 %11000000
-  B7 %10000001
+* = $9fff
 
-  B7 %00000111
-  B7 %00001110
-  B7 %00011100
-  B7 %00111000
-  B7 %01110000
-  B7 %11100000
-  B7 %11000001
-  B7 %10000011
-
-  B7 %00001111
-  B7 %00011110
-  B7 %00111100
-  B7 %01111000
-  B7 %11110000
-  B7 %11100001
-  B7 %11000011
-  B7 %10000111
-
-* = $fffa
-
-  .word $e000
-  .word $e000
-  .word $e000
-
+  .byte 0

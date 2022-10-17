@@ -10,11 +10,12 @@ DEPENDS=bootstrap.s
 all: $(PRG)
 $(PRG): $(DEPENDS)
 bump.prg: bump_sprite_data.s
-vsp_tester.crt: binary_charset.s
 .PHONY: clean
 %.prg: %.s
 	vasm6502_oldstyle -dotdir -Fbin -o $@ $<
 %.crt: %.prg
 	cartconv -t ulti -i $< -o $@
+vsp_tester.crt: vsp_tester.prg
+	cartconv -t normal -i $< -o $@
 clean:
 	rm -f *.prg *.crt
