@@ -20,25 +20,45 @@ coldboot
   sta $dd00
   sta $dd02
   cld
+  ldx #0
+  lda #fg
+clrcolor
+  sta $d800,x
+  sta $d900,x
+  sta $da00,x
+  sta $db00,x
+  inx
+  bne clrcolor
 
 warmboot
   lda #fg
   sta 53281
 
   ldx #0
+  lda #' '
 clr
-  txa
   sta $0400,x
   sta $0500,x
   sta $0600,x
   sta $0700,x
-  lda #fg
-  sta $d800,x
-  sta $d900,x
-  sta $da00,x
-  sta $db00,x
   inx
   bne clr
+
+  ldy #31
+fill
+  tya
+  asl a
+  asl a
+  asl a
+  adc #7
+  tax
+  lda idle_data,y
+  sta $0400,x
+  sta $0500,x
+  sta $0600,x
+  sta $0700,x
+  dey
+  bpl fill
 
   ldx #$1f
   ldy #$ff
