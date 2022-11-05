@@ -68,8 +68,6 @@ fill
   sta 53270
   lda #((YOFFSET + 1) & 7) | YBITS
   sta cry
-  lda #47
-  sta rc
   lda #22
   sta 53272
   lda #fg
