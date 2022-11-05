@@ -57,21 +57,9 @@ fill
   sta $0500,x
   sta $0600,x
   sta $0700,x
+  sta $3800,x
   dey
   bpl fill
-
-  ldx #$1f
-  ldy #$ff
-
-fill_idle
-  lda idle_data,x
-  sta $3800,y
-  tya
-  sec
-  sbc #8
-  tay
-  dex
-  bpl fill_idle
 
   lda #0
   sta $3fff
