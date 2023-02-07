@@ -116,7 +116,8 @@ ld:	dey
 	lda #63
 	sta nlines
 	cli
-	rts
+	; See 50demo.s
+	jmp post
 
 delay:	ldy #7
 l5:	dey
@@ -154,3 +155,60 @@ l8:	dec viccrx
 	lda #1
 	sta vicirq
 	jmp defirq
+
+post	lda #sprite2>>6
+	sta 2040
+	lda #sprite>>6
+	sta 2041
+	lda #$3
+	sta $d015
+	sta $d010
+	lda #2
+	sta $d01c
+	lda #122+8 ; adjust for ntsc
+	sta $d000
+	lda #250
+	sta $d001
+	lda #114+8 ; ditto
+	sta $d002
+	lda #249
+	sta $d003
+	lda #0
+	sta $d017
+	sta $d01d
+	sta $d021
+	lda #12
+	sta $d020
+	lda #6
+	sta $d025
+	lda #2
+	sta $d026
+	lda #15
+	sta $d027
+	lda #5
+	sta $d028
+	rts
+
+	.align 6
+sprite
+	.rept 7
+	.byte 192,0,0
+	.endr
+	.rept 7
+	.byte 128,0,0
+	.endr
+	.rept 7
+	.byte 64,0,0
+	.endr
+
+	.align 6
+sprite2
+	.rept 7
+	.byte 0,16,0
+	.endr
+	.rept 7
+	.byte 0,32,0
+	.endr
+	.rept 7
+	.byte 0,64,0
+	.endr
