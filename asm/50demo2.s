@@ -161,29 +161,39 @@ l8:	dec viccrx
 	; Optional extra bits
 	; to illustrate problem with multi-color sprite
 	; at X-position $162
+	; Also research true start of HBLANK (may vary between chip revs)
 
-post	lda #sprite>>6
+post	lda #sprite2>>6
 	sta 2040
-	lda #1
+	lda #sprite>>6
+	sta 2041
+	lda #$3
 	sta $d015
-	sta $d01c
 	sta $d010
-	lda #98
+	lda #2
+	sta $d01c
+	lda #122
 	sta $d000
-	lda #0
+	lda #250
 	sta $d001
+	lda #114
+	sta $d002
+	lda #249
+	sta $d003
+	lda #0
 	sta $d017
 	sta $d01d
-	; Display 1-pixel wide black alternating bit pattern in
-	; the top 4 lines of the display. This can be sort-of used
-	; to make out which phase the dot clock is in relative to
-	; the main clock. (In 2 of the 4 phases the black lines are
-	; wider than the non-black, and in the other 2 phases the black
-	; lines are narrower.)
-	lda #31
-	sta viccry
-	lda #$aa
-	sta $3fff
+	sta $d021
+	lda #12
+	sta $d020
+	lda #6
+	sta $d025
+	lda #2
+	sta $d026
+	lda #15
+	sta $d027
+	lda #5
+	sta $d028
 	rts
 
 	.align 6
@@ -193,6 +203,18 @@ sprite
 	.endr
 	.rept 7
 	.byte 128,0,0
+	.endr
+	.rept 7
+	.byte 64,0,0
+	.endr
+
+	.align 6
+sprite2
+	.rept 7
+	.byte 16,0,0
+	.endr
+	.rept 7
+	.byte 32,0,0
 	.endr
 	.rept 7
 	.byte 64,0,0
