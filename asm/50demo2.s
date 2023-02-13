@@ -1,7 +1,6 @@
 	; Program to display an
 	; arbitrary number of sprites
 	; in the side border.
-	; (PAL required)
 
 	; Copyright 2004 Michiel Boland
 
@@ -9,8 +8,6 @@
 	; number of lines for which
 	; the side border will be
 	; opened.
-
-fudgefac	= 26
 
 nlines	= $02
 
@@ -42,7 +39,11 @@ start:	sei
 	lda cia1icr
 
 	; Program timer
+	.ifdef NTSC
+	lda #64
+	.else
 	lda #62
+	.endif
 	sta cia1tb
 	lda #0
 	sta cia1tb+1
@@ -114,17 +115,21 @@ ld:	dey
 	lda #>irq
 	sta irqvec+1
 
+	.ifdef NTSC
+	lda #63
+	.else
 	lda #112
+	.endif
 	sta nlines
 	cli
-	; Later addition - you can replace this part
-	; with rts and remove everything from post onward
-	; to get the original back.
-	jmp post
+	rts
 
 delay:	ldy #7
 l5:	dey
 	bne l5
+	.ifdef NTSC
+	nop
+	.endif
 	nop
 	rts
 
@@ -135,7 +140,11 @@ l7:	cmp cia1tb
 	bcc l7
 	nop
 	lda cia1tb
+	.ifdef NTSC
+	sbc #58
+	.else
 	sbc #56
+	.endif
 	lsr a
 	bcs *+2
 	lsr a
@@ -157,65 +166,3 @@ l8:	dec viccrx
 	lda #1
 	sta vicirq
 	jmp defirq
-
-	; Optional extra bits
-	; to illustrate problem with multi-color sprite
-	; at X-position $162
-	; Also research true start of HBLANK (may vary between chip revs)
-
-post	lda #sprite2>>6
-	sta 2040
-	lda #sprite>>6
-	sta 2041
-	lda #$3
-	sta $d015
-	sta $d010
-	lda #2
-	sta $d01c
-	lda #122
-	sta $d000
-	lda #250
-	sta $d001
-	lda #114
-	sta $d002
-	lda #249
-	sta $d003
-	lda #0
-	sta $d017
-	sta $d01d
-	sta $d021
-	lda #12
-	sta $d020
-	lda #6
-	sta $d025
-	lda #2
-	sta $d026
-	lda #15
-	sta $d027
-	lda #5
-	sta $d028
-	rts
-
-	.align 6
-sprite
-	.rept 7
-	.byte 192,0,0
-	.endr
-	.rept 7
-	.byte 128,0,0
-	.endr
-	.rept 7
-	.byte 64,0,0
-	.endr
-
-	.align 6
-sprite2
-	.rept 7
-	.byte 16,0,0
-	.endr
-	.rept 7
-	.byte 32,0,0
-	.endr
-	.rept 7
-	.byte 64,0,0
-	.endr
