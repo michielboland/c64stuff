@@ -19,5 +19,6 @@ bump.prg: bump_sprite_data.s
 vsp_tester.crt: vsp_tester.prg
 	cartconv -t normal -i $< -o $@
 50demo2_ntsc.prg: 50demo2.s
+50demo3_ntsc.prg: 50demo3.s
 clean:
 	rm -f *.prg *.crt

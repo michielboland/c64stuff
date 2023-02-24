@@ -1,5 +1,5 @@
 	; Programmable VIC-II effect
-	; generator. (PAL required.)
+	; generator.
 
 	; Copyright 2004 Michiel Boland
 
@@ -32,8 +32,6 @@ cia1crb	= $dc0f
 
 defirq	= $ea31
 
-fudgefac	= 26
-
 	.include "bootstrap.s"
 
 start:	sei
@@ -48,7 +46,11 @@ start:	sei
 	lda cia1icr
 
 	; Program timer
+	.ifdef NTSC
+	lda #64
+	.else
 	lda #62
+	.endif
 	sta cia1tb
 	lda #0
 	sta cia1tb+1
@@ -128,12 +130,19 @@ l1:	jsr delay
 delay:	ldy #7
 l5:	dey
 	bne l5
+	.ifdef NTSC
+	nop
+	.endif
 	nop
 	rts
 
 irq:	lda cia1tb
 	sec
-	sbc #fudgefac
+	.ifdef NTSC
+	sbc #28
+	.else
+	sbc #26
+	.endif
 	; All official 6502 opcodes take
 	; at most seven cycles. 
 	; Delay a bit to sync with the
@@ -148,6 +157,10 @@ irq:	lda cia1tb
 	bit 0
 	nop
 l6:	ldy #0
+	.ifdef NTSC
+	nop
+	nop
+	.endif
 	beq donep
 
 doprog:	tya
@@ -212,6 +225,10 @@ bd1:	dey
 	; DMA-delay
 idata:	.word 0
 	.byte 17,28
+	.ifdef NTSC
+	.word 46
+	.else
 	.word 44
+	.endif
 	.byte 17,27
 eidata:
