@@ -11,17 +11,9 @@ irq_handler
   lda 53273
   sta 53273
   and #8
-  bne ok
-  .byte 2
-ok
-  lda 53268
-  bne valid
-  lda 53267
-  cmp #209 ; pal
   beq done
-  cmp #213 ; ntsc
-  beq done
-valid
+  bit 53265
+  bpl done
   ldy #0
   lda 53267
   sta (2),y
@@ -47,6 +39,7 @@ done
   pla
   rti
 rst_handler
+  cld
   lda #11
   sta 53280
   lda #15
@@ -57,11 +50,10 @@ rst_handler
   sta 53270
   lda #28
   sta 53272
-  lda #0
-  sta 2
   lda #4
   sta 3
   lda #0
+  sta 2
 cls
   sta $d800,x
   sta $d900,x
