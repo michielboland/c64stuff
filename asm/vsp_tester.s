@@ -85,8 +85,8 @@ wait
   bmi *-3
 
   .macro BADLINE
-  lda #((\2 + YOFFSET) & 7) | YBITS
-  ldy #((\2 + \3 + YOFFSET) & 7) | YBITS
+  lda #((\1 + YOFFSET) & 7) | YBITS
+  ldy #((\1 + \2 + YOFFSET) & 7) | YBITS
   ldx #\1 + YOFFSET
   cpx rc
   bne *-3
@@ -104,7 +104,7 @@ wait
   .endm
 
   .macro VSP
-  BADLINE \1, \1, \2
+  BADLINE \1, \2
   IDLE \1 + 7, \1 + 2
   .endm
 
