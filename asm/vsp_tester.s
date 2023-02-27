@@ -98,7 +98,12 @@ wait
 
   .macro BADLINE
   lda #((\1 + YOFFSET) & 7) | YBITS
+  .if \2 == 0
+  ; VSP via DEN toggle
+  ldy #((\1 + YOFFSET) & 7) | (YBITS & ~16)
+  .else
   ldy #((\1 + \2 + YOFFSET) & 7) | YBITS
+  .endif
   ldx #\1 + YOFFSET
   cpx rc
   bne *-3
@@ -125,9 +130,9 @@ loop
   bpl *-3
 
   ; generate some grey dots
-  lda 53280
+  lda 53281
   .rept 6
-  sta 53280
+  sta 53281
   .endr
 
   bit cry
@@ -167,7 +172,23 @@ sync
   .align 5
 
 top
+  .if YOFFSET = 7
+  ; Hack to make sure badline does not get triggered early
+  ; Alignment slightly off now but that does not matter
+  ldx #52
+  cpx rc
+  bne *-3
+  lda #1|YBITS
+  sta cry
+  bit 0
+  nop
+  nop
+  .endif
+  .if YOFFSET = 0
+  VSP 48, 0
+  .else
   VSP 48, 1
+  .endif
   VSP 57, 2
   VSP 66, 3
   VSP 75, 4
@@ -188,11 +209,27 @@ top
   VSP 210, 5
   VSP 219, 6
   VSP 228, 7
-  VSP 237, 1
   .if YOFFSET < 3
-  VSP 246, 2
+  VSP 237, 1
+  BADLINE 246, 2
+  .else
+  BADLINE 237,1
   .endif
-  lda #((YOFFSET + 1) & 7) | YBITS
+  ldx #250
+  cpx rc
+  bne *-3
+  ; Prepare for first badline at top of screen
+  ; Also open top/bottom border to make things visible
+  ; if YOFFSET is not 3
+  .if YOFFSET == 0
+  lda #0
+  .else
+  .if YOFFSET == 7
+  lda #7 | (YBITS & ~8)
+  .else
+  lda #((YOFFSET + 1) & 7) | (YBITS & ~8)
+  .endif
+  .endif
   sta cry
 
   jmp loop
