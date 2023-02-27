@@ -42,6 +42,10 @@ vicehack
   inx
   bne vicehack
 
+  ; make sure stack does not use vulnerable memory
+  ldx #$fe
+  txs
+
 warmboot
   lda #fg
   sta 53281
