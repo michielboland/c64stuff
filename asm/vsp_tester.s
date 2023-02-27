@@ -119,7 +119,11 @@ wait
   ldx #\1 + YOFFSET
   cpx rc
   bne *-3
+  .ifdef NTSC
+  jsr smalldelay
+  .else
   bit $ffff
+  .endif
   lda #((\2 + YOFFSET) & 7) | YBITS
   sta cry
   .endm
@@ -141,6 +145,13 @@ loop
 
   bit cry
   bmi *-3
+
+  .ifdef NTSC
+  ; Workaround for cycles not being a multiple of 7 on NTSC systems
+  ldx #YOFFSET + 1
+  cpx rc
+  bne *-3
+  .endif
 
   ; sync to raster counter for predictable results
 sync
@@ -166,6 +177,9 @@ sync
   beq *+2
 
   bit 0
+  .ifdef NTSC
+  nop
+  .endif
 
   jmp top
 
@@ -244,8 +258,17 @@ delay
 .l0
   dey
   bne .l0
+  .ifdef NTSC
+  nop
+  .endif
   nop
   rts
+
+  .ifdef NTSC
+smalldelay
+  bit 0
+  rts
+  .endif
 
   .align 5
 idle_data

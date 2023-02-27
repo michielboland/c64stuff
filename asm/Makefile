@@ -6,7 +6,7 @@ PRG=crunch.prg border.prg sprite.prg sp.prg xhak.prg bc.prg colors.prg pal.prg \
 	vic20rasterscan.prg vic20rasterscan_ntsc.prg 50demo2_ntsc.prg \
 	50demo3_ntsc.prg vic20size.prg test5.crt sprite_max_coltest.crt \
 	vsp_tester.crt vic20mix.prg greydots.prg sprite_addr_tester.prg \
-	lptest_ntsc.prg sp_ntsc.prg lptest2.crt
+	lptest_ntsc.prg sp_ntsc.prg lptest2.crt vsp_tester_ntsc.crt
 DEPENDS=bootstrap.s
 all: $(PRG)
 $(PRG): $(DEPENDS)
@@ -18,7 +18,10 @@ bump.prg: bump_sprite_data.s
 	cartconv -t ulti -i $< -o $@
 vsp_tester.crt: vsp_tester.prg
 	cartconv -t normal -i $< -o $@
+vsp_tester_ntsc.crt: vsp_tester_ntsc.prg
+	cartconv -t normal -i $< -o $@
 50demo2_ntsc.prg: 50demo2.s
 50demo3_ntsc.prg: 50demo3.s
+vsp_tester_ntsc.prg: vsp_tester.s
 clean:
 	rm -f *.prg *.crt
