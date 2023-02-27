@@ -30,6 +30,18 @@ clrcolor
   inx
   bne clrcolor
 
+vicehack
+  lda $8000,x
+  sta $8000,x
+  lda $8100,x
+  sta $8100,x
+  lda $8200,x
+  sta $8200,x
+  lda $8300,x
+  sta $8300,x
+  inx
+  bne vicehack
+
 warmboot
   lda #fg
   sta 53281
