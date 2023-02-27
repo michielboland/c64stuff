@@ -2,7 +2,7 @@
 
 * = $8000
 
-YOFFSET = 3
+YOFFSET = 0
 YBITS = %00011000
 
 cry = 53265
