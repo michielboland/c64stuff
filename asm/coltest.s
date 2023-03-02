@@ -51,6 +51,12 @@ nocol
   and #127
 update_screen
   sta (251), y
+  lda 252
+  clc
+  adc #212
+  sta 252
+  lda #1
+  sta (251), y
   jsr toggle_sprite_pixel
   ldx x
   ldy y
