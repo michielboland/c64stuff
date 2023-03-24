@@ -11,8 +11,18 @@ bg = 11
 fg = 12
 
   .word coldboot
-  .word warmboot
+  .word nmi
   .byte $c3, $c2, $cd, $38, $30 ; CBM80
+
+nmi
+  lda #0
+  sta 53280
+  pla
+  tay
+  pla
+  tax
+  pla
+  rti
 
 coldboot
   jsr $fd15 ; make restore work properly
@@ -250,7 +260,12 @@ top
   .endif
   sta cry
 
+  lda 53280
+  cmp #240
+  beq reset
   jmp loop
+reset
+  jmp warmboot
 
   .align 3
 delay
