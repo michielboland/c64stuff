@@ -39,6 +39,10 @@ clrcolor
   sta $db00,x
   inx
   bne clrcolor
+  lda #YOFFSET + 48
+  sta rc
+  lda #1
+  sta 53274
 
 vicehack
   lda $8000,x
@@ -263,6 +267,9 @@ top
   lda 53280
   cmp #240
   beq reset
+  lda #1
+  lda 53273
+  sta 53273
   jmp loop
 reset
   jmp warmboot
