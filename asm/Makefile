@@ -7,7 +7,7 @@ PRG=crunch.prg border.prg sprite.prg sp.prg xhak.prg bc.prg colors.prg pal.prg \
 	50demo3_ntsc.prg vic20size.prg test5.crt sprite_max_coltest.crt \
 	vsp_tester.crt vic20mix.prg greydots.prg sprite_addr_tester.prg \
 	lptest_ntsc.prg sp_ntsc.prg lptest2.crt vsp_tester_ntsc.crt \
-	coltest.prg maxtest.crt colorbars-alt.prg fringe.crt
+	coltest.prg maxtest.crt colorbars-alt.prg fringe.crt joytest_ntsc.prg
 DEPENDS=bootstrap.s
 all: $(PRG)
 $(PRG): $(DEPENDS)
@@ -24,5 +24,6 @@ vsp_tester_ntsc.crt: vsp_tester_ntsc.prg
 50demo2_ntsc.prg: 50demo2.s
 50demo3_ntsc.prg: 50demo3.s
 vsp_tester_ntsc.prg: vsp_tester.s
+joytest_ntsc.prg: joytest.s
 clean:
 	rm -f *.prg *.crt
