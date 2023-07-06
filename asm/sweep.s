@@ -17,7 +17,7 @@ a = 251
   sta 54295
   lda #240
   sta 54278
-  lda #17
+  lda #9
   sta 54276
 
   ldy #0
@@ -48,6 +48,9 @@ nextfreq
   lda #1
   sta a + 3
 
+  lda #17
+  sta 54276
+
   clc
 loop
 
@@ -71,8 +74,11 @@ loop
 
   bcc loop
 
+  lda #9
+  sta 54276
+
   iny
-  cpy #12
+  cpy #36
   bcc nextfreq
 
   lda crysav
@@ -80,14 +86,34 @@ loop
   lda ecsav
   sta 53280
 
+  lda #0
+  sta 54276
+
   cli
 
   rts
 
 filtlo
-  .byte $04, $05, $00, $02, $00, $00, $00, $00, $00, $00, $00, $07
+  .byte 4, 5, 6, 7
+  .byte 0, 2, 4, 6
+  .byte 0, 4, 0, 4
+  .byte 0, 0, 0, 0
+  .byte 0, 0, 0, 0
+  .byte 0, 0, 0, 0
+  .byte 0, 0, 0, 0
+  .byte 0, 0, 0, 0
+  .byte 0, 0, 0, 0
 filthi
-  .byte $00, $00, $01, $01, $02, $04, $08, $10, $20, $40, $80, $ff
+  .byte 0, 0, 0, 0
+  .byte 1, 1, 1, 1
+  .byte 2, 2, 3, 3
+  .byte 4, 5, 6, 7
+  .byte 8, 10, 12, 14
+  .byte 16, 20, 24, 28
+  .byte 32, 40, 48, 56
+  .byte 64, 80, 96, 112
+  .byte 128, 160, 192, 224
+
 crysav
   .byte 0
 ecsav
