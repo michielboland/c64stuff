@@ -2,7 +2,6 @@
 
 end   = 4 ; ctrl-D
 cr    = 13
-down  = 17
 right = 29
 up    = 145
 left  = 157
@@ -22,12 +21,6 @@ start
   cmp #cr
   bne *+5
   jsr toggle
-  cmp #down
-  bne *+5
-  jsr sublarge
-  cmp #up
-  bne *+5
-  jsr addlarge
   cmp #left
   bne *+5
   jsr subsmall
@@ -35,10 +28,12 @@ start
   bne *+5
   jsr addsmall
 printfilt
-  jsr adjust
   jsr setfilt
-  ldx filt
-  lda filt + 1
+  lda filt
+  asl
+  tay
+  ldx filters, y
+  lda filters + 1, y
   jsr printit
   lda #<padret
   ldy #>padret
@@ -54,12 +49,11 @@ printit
 subsmall
   pha
   lda filt
+  beq .l0
   sec
-  sbc smallinc
+  sbc #1
   sta filt
-  lda filt + 1
-  sbc #0
-  sta filt + 1
+.l0
   pla
   rts
 
@@ -67,74 +61,43 @@ addsmall
   pha
   lda filt
   clc
-  adc smallinc
+  adc #1
+  cmp #maxfilt
+  beq .l0
   sta filt
-  lda filt + 1
-  adc #0
-  sta filt + 1
-  pla
-  rts
-
-sublarge
-  pha
-  lda filt
-  sec
-  sbc largeinc
-  sta filt
-  lda filt + 1
-  sbc #0
-  sta filt + 1
-  pla
-  rts
-
-addlarge
-  pha
-  lda filt
-  clc
-  adc largeinc
-  sta filt
-  lda filt + 1
-  adc #0
-  sta filt + 1
-  pla
-  rts
-
-adjust
-  lda filt + 1
-  bpl .l0
-  lda #0
-  sta filt
-  sta filt + 1
-  rts
 .l0
-  cmp #8
-  bcc .l1
-  lda #255
-  sta filt
-  lda #7
-  sta filt + 1
-.l1
+  pla
   rts
 
 setfilt
   lda filt
-  and #7
-  tax
-  lda #0
-  jsr printit
-  lda filt + 1
+  sta 53280
+  asl
+  tay
+  lda filters + 1, y
   sta scratch
-  lda filt
+  lda filters, y
+  tax
   .rept 3
   lsr scratch
   ror
   .endr
-  ldy filt
+  sta hi
+  txa
+  and #7
+  sta lo
+
+  lda #0
+  ldx lo
+  jsr printit
+  lda #0
+  ldx hi
+  jsr printit
+
+  ldy lo
+  lda hi
   sty 54293
   sta 54294
-  tax
-  lda #0
-  jsr printit
   rts
 
 toggle
@@ -151,8 +114,14 @@ padret
   .byte "     ", cr, up, 0
 
 filt
-  .word 0
-smallinc
-  .byte 1
-largeinc
-  .byte 16
+  .byte 0
+
+lo
+  .byte 0
+hi
+  .byte 0
+filters
+  .word 2, 3, 4, 5, 6, 7, 8, 10, 11, 13, 16, 19, 23, 27, 32, 38, 45, 54, 64
+  .word 76, 91, 108, 128, 152, 181, 215, 256, 304, 362, 431, 512, 609, 724
+  .word 861, 1024, 1218, 1448, 1722, 2047
+maxfilt = (* - filters) / 2
