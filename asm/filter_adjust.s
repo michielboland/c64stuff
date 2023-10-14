@@ -11,6 +11,10 @@ strout = $ab1e
 
 scratch = 2
 
+  lda #$2f
+  sta 54296
+  lda #$f8
+  sta 54295
   jmp printfilt
 start
   jsr $ffe4
