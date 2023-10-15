@@ -8,6 +8,8 @@ max_track = 40
 ; temp storage for print_hex
 phtmp  = 2
 st     = $90
+mapptr = $a7
+
 ; burst cmd status
 bst    = $fa
 
@@ -21,6 +23,7 @@ sclen  = $fd
 rbsize = $fd
 
 sector_buf = $c000
+chs_map    = $c200 ; track/head/sector/status
 
 strout = $ab1e
 
@@ -29,6 +32,12 @@ sdr1   = $dc0c
 icr1   = $dc0d
 cra1   = $dc0e
 pra2   = $dd00
+
+reu_command  = $df01
+reu_c64base  = $df02
+reu_reubase  = $df04
+reu_translen = $df07
+reu_control  = $df0a
 
 ioinit = $ff84
 second = $ff93
@@ -113,8 +122,16 @@ read_all_sectors
   sta head
   sta track
   sta next_track
+  sta reubase
+  sta reubase+1
+  sta reubase+2
+  sta has_errors
   lda #1
   sta sector
+  lda #<chs_map
+  sta mapptr
+  lda #>chs_map
+  sta mapptr+1
 .next_head_track
   lda #9+1
   sec
@@ -133,14 +150,27 @@ read_all_sectors
   jsr recv_burst_cmd_status
   bcs .err
   RECV_BURST sector_buf, 512
+  jsr copy_sector_buf_to_reu
   jmp .l1
 .err
+  lda #1
+  sta has_errors
+  jsr skip_sector_in_reu
   lda #0
   sta nsectors
 .l1
   PUTC 13
+  jsr update_map
   jsr next
   bcc .next_sector
+  jsr write_map_to_reu
+  lda has_errors
+  beq .l2
+  lda #10
+  .byte $2c
+.l2
+  lda #13
+  sta $d020
   rts
 
 burst_error
@@ -156,6 +186,28 @@ print_track
   jsr print_hex
   lda sector
   jmp print_hex
+
+update_map
+  ldy #0
+  lda track
+  sta (mapptr),y
+  iny
+  lda head
+  sta (mapptr),y
+  iny
+  lda sector
+  sta (mapptr),y
+  iny
+  lda bst
+  sta (mapptr),y
+  lda mapptr
+  clc
+  adc #4
+  sta mapptr
+  bcc .l0
+  inc mapptr+1
+.l0
+  rts
 
 next
   ldx sector
@@ -306,6 +358,61 @@ print_hex
   pla
   tax
   lda phtmp
+
+copy_sector_buf_to_reu
+  lda #0
+  sta reu_control
+  lda #<sector_buf
+  sta reu_c64base
+  lda #>sector_buf
+  sta reu_c64base+1
+  lda reubase
+  sta reu_reubase
+  lda reubase+1
+  sta reu_reubase+1
+  lda reubase+2
+  sta reu_reubase+2
+  lda #<512
+  sta reu_translen
+  lda #>512
+  sta reu_translen+1
+  lda #%10010000 ; c64 -> REU with immediate execution
+  sta reu_command
+skip_sector_in_reu
+  lda reubase
+  clc
+  adc #<512
+  sta reubase
+  lda reubase+1
+  adc #>512
+  sta reubase+1
+  lda reubase+2
+  adc #0
+  sta reubase+2
+  rts
+
+write_map_to_reu
+  lda #0
+  sta reu_control
+  lda #<chs_map
+  sta reu_c64base
+  lda #>chs_map
+  sta reu_c64base+1
+  lda reubase
+  sta reu_reubase
+  lda reubase+1
+  sta reu_reubase+1
+  lda reubase+2
+  sta reu_reubase+2
+  lda mapptr
+  sec
+  sbc #<chs_map
+  sta reu_translen
+  lda mapptr+1
+  sbc #>chs_map
+  sta reu_translen+1
+  lda #%10010000 ; c64 -> REU with immediate execution
+  sta reu_command
   rts
 
 gcr_disk
@@ -341,3 +448,9 @@ disk_format_buf
   .byte 0 ; minimum sector
   .byte 0 ; maximum sector
   .byte 0 ; interleave
+reubase
+  .byte 0
+  .byte 0
+  .byte 0
+has_errors
+  .byte 0
