@@ -5,7 +5,13 @@ sec    = $6f
 
 st     = $90
 
-linprt = $bdcd
+; buffer pointer for send_drive_cmd
+scbuf  = $fb
+; length of string to send to drive
+sclen  = $fd
+; temp storage for print_hex
+phtmp  = $fe
+
 strout = $ab1e
 
 ta1    = $dc04
@@ -25,84 +31,33 @@ listen = $ffb1
 talk   = $ffb4
 chrout = $ffd2
 
-  lda #<dbg1
-  ldy #>dbg1
+  .macro PRINT
+  pha
+  tya
+  pha
+  lda #<\1
+  ldy #>\1
   jsr strout
+  pla
+  tay
+  pla
+  .endm
+
+  .macro SEND_CMD
+  lda #<\1
+  sta scbuf
+  lda #>\1
+  sta scbuf+1
+  lda #\2
+  sta sclen
+  jsr send_drive_cmd
+  .endm
 
   jsr send_burst
-
-  lda #<dbg2
-  ldy #>dbg2
-  jsr strout
-
-  lda #0
-  sta st
-  lda #drive
-  jsr listen
-  lda #sec
-  jsr second
-  bit st
-  bpl .l1
-  ; device not present
-  lda #<nodev
-  ldy #>nodev
-  jmp strout
-.l1
-  ldx #0
-  ldy #endbuf-buf
-.nextout
-  lda buf, x
-  jsr ciout
-  bit st
-  bpl .l2
-  jmp unlsn
-.l2
-  inx
-  dey
-  bpl .nextout
-
-.l3
-  jsr unlsn
-
-  lda #<dbg3
-  ldy #>dbg3
-  jsr strout
-
+  SEND_CMD inquire_disk_cmd, 3
   jsr recv_burst_cmd_status
-  tax
-  lda #0
-  jsr linprt
-
-  lda #<dbg4
-  ldy #>dbg4
-  jsr strout
-
-  lda #drive
-  jsr talk
-  lda #sec
-  jsr tksa
-.nextin
-  jsr acptr
-  bit st
-  bvs .eoi
-  jsr chrout
-  jmp .nextin
-.eoi
-  jmp untlk
-
-recv_burst_cmd_status
-  sei
-  bit icr1
-  lda pra2
-  eor #$10 ; toggle clock
-  sta pra2
-  lda #$08
-.l0
-  bit icr1
-  beq .l0
-  lda sdr1
-  cli
-  rts
+  jsr print_hex
+  jmp recv_and_print_drive_status
 
 send_burst
   lda #$7f
@@ -124,17 +79,84 @@ send_burst
   beq .l0
   jmp ioinit
 
-nodev
-  .byte $96,'DEVICE NOT PRESENT',$9a,13,0
-dbg1
-  .byte 'SEND BURST',13,$91,0
-dbg2
-  .byte 'SEND CMD  ',13,$91,0
-dbg3
-  .byte '    <- RECV BURST',13,$91,0
-dbg4
-  .byte 13,'RECV STATUS',13,$91,0
-buf
+recv_burst_cmd_status
+  sei
+  bit icr1
+  lda pra2
+  eor #$10 ; toggle clock
+  sta pra2
+  lda #$08
+.l0
+  bit icr1
+  beq .l0
+  lda sdr1
+  cli
+  rts
+
+send_drive_cmd
+  lda #0
+  sta st
+  lda #drive
+  jsr listen
+  lda #sec
+  jsr second
+  bit st
+  bmi .dnp
+.l1
+  ldy #0
+  ldx sclen
+.nextout
+  lda (scbuf),y
+  jsr ciout
+  bit st
+  bmi .dnp
+  iny
+  dex
+  bpl .nextout
+  jmp unlsn
+.dnp
+  ldx #5 ; device not present error
+  jmp ($0300)
+
+recv_and_print_drive_status
+  lda #drive
+  jsr talk
+  lda #sec
+  jsr tksa
+.nextin
+  jsr acptr
+  bit st
+  bvs .eoi
+  jsr chrout
+  jmp .nextin
+.eoi
+  jmp untlk
+
+print_hex
+  sta phtmp
+  txa
+  pha
+  lda phtmp
+  .rept 4
+  lsr a
+  .endr
+  tax
+  lda hexchars, x
+  jsr chrout
+  lda phtmp
+  and #$0f
+  tax
+  lda hexchars, x
+  jsr chrout
+  lda #13
+  jsr chrout
+  pla
+  tax
+  lda phtmp
+  rts
+
+hexchars
+  .byte '0123456789ABCDEF'
+inquire_disk_cmd
   .byte 'U0',4
 
-endbuf = *
