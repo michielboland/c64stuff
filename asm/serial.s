@@ -162,6 +162,7 @@ read_all_sectors
   sta nsectors
 .l1
   PUTC 13
+  PUTC $91
   jsr update_map
   jsr next
   bcc .next_sector
