@@ -3,14 +3,24 @@
 drive  = 9
 sec    = $6f
 
+max_track = 40
+
+; temp storage for print_hex
+phtmp  = 2
 st     = $90
+; burst cmd status
+bst    = $fa
 
 ; buffer pointer for send_drive_cmd
 scbuf  = $fb
+; buffer pointer for recv_burst_data
+rbbuf  = $fb
 ; length of string to send to drive
 sclen  = $fd
-; temp storage for print_hex
-phtmp  = $fe
+; buffer size fo recv_burst_data
+rbsize = $fd
+
+sector_buf = $c000
 
 strout = $ab1e
 
@@ -32,15 +42,9 @@ talk   = $ffb4
 chrout = $ffd2
 
   .macro PRINT
-  pha
-  tya
-  pha
   lda #<\1
   ldy #>\1
   jsr strout
-  pla
-  tay
-  pla
   .endm
 
   .macro SEND_CMD
@@ -53,15 +57,139 @@ chrout = $ffd2
   jsr send_drive_cmd
   .endm
 
+  .macro RECV_BURST
+  lda #<\1
+  sta rbbuf
+  lda #>\1
+  sta rbbuf+1
+  lda #<\2
+  sta rbsize
+  lda #>\2
+  sta rbsize+1
+  jsr recv_burst_data
+  .endm
+
+  .macro TOGGLE_CLK
+  lda pra2
+  eor #$10 ; toggle clock
+  sta pra2
+  .endm
+
+  .macro PUTC
+  lda #\1
+  jsr chrout
+  .endm
+
   jsr send_burst
-  SEND_CMD inquire_disk_cmd, 3
+  SEND_CMD query_disk_format_cmd, 3
   jsr recv_burst_cmd_status
+  bcc .ok
+  jmp burst_error
+.ok
+  bit bst
+  bmi .mfm
+  PRINT gcr_disk
+  jmp ioinit
+.mfm
+  RECV_BURST disk_format_buf, 6
+  lda disk_format_buf
+  and #$30
+  cmp #$20
+  beq .l0
+  PRINT not_a_512_byte_sector_disk
+  rts
+.l0
+  lda disk_format_buf + 1
+  cmp #9
+  beq .l1
+  PRINT not_9_sectors_per_track
+  rts
+.l1
+  SEND_CMD sector_interleave_cmd,4 ; is this necessary?
+
+read_all_sectors
+  ; re-initialize parameters, in case of re-run
+  lda #0
+  sta head
+  sta track
+  sta next_track
+  lda #1
+  sta sector
+.next_head_track
+  lda #9+1
+  sec
+  sbc sector
+  cmp #2+1
+  bcc .l0
+  lda #2 ; for some reason, loading more than 2 sectors does not work
+.l0
+  sta nsectors
+  SEND_CMD read_cmd, 7
+.next_sector
+  lda nsectors
+  beq .next_head_track
+  dec nsectors
+  jsr print_track
+  jsr recv_burst_cmd_status
+  bcs .err
+  RECV_BURST sector_buf, 512
+  jmp .l1
+.err
+  lda #0
+  sta nsectors
+.l1
+  PUTC 13
+  jsr next
+  bcc .next_sector
+  rts
+
+burst_error
   jsr print_hex
+  PUTC ' '
+  jsr ioinit
   jmp recv_and_print_drive_status
 
+print_track
+  lda track
+  jsr print_hex
+  lda head
+  jsr print_hex
+  lda sector
+  jmp print_hex
+
+next
+  ldx sector
+  cpx #9
+  inx
+  bcc .l1
+  ldx #1
+  stx sector
+  lda head
+  eor #$10
+  sta head
+  bne .l2
+  ldx track
+  inx
+  cpx #max_track
+  bcc .l3
+  rts
+.l3
+  stx track
+  stx next_track
+  rts
+.l1
+  stx sector
+  rts
+.l2
+  clc
+  rts
+
 send_burst
+  sei
   lda #$7f
   sta icr1 ; disable CIA interrupts
+  bit icr1
+  cli
   lda #0
   sta ta1+1
   lda #4
@@ -70,28 +198,55 @@ send_burst
   and #$80
   ora #$55 ; timer A CNT
   sta cra1
-  bit icr1
   lda #$ff
   sta sdr1 ; send one byte
   lda #$08
 .l0
-  bit icr1 ; wait until byte is sent
+  bit icr1 ; wait until byte is sent (perhaps not strictly needed)
   beq .l0
   jmp ioinit
 
 recv_burst_cmd_status
   sei
+  lda #$7f
+  sta icr1
   bit icr1
-  lda pra2
-  eor #$10 ; toggle clock
-  sta pra2
+  cli
+  TOGGLE_CLK
   lda #$08
 .l0
   bit icr1
   beq .l0
   lda sdr1
-  cli
+  sta bst
+  and #$0f
+  cmp #2
   rts
+
+recv_burst_data
+  ldy #0
+.next
+  lda rbsize
+  bne .l0
+  lda rbsize+1
+  bne .l1
+  jmp ioinit
+.l1
+  dec rbsize+1
+.l0
+  dec rbsize
+  TOGGLE_CLK
+  lda #$08
+.l2
+  bit icr1
+  beq .l2
+  lda sdr1
+  inc $d020 ; debug
+  sta (rbbuf),y
+  inc rbbuf
+  bne .next
+  inc rbbuf+1
+  jmp .next
 
 send_drive_cmd
   lda #0
@@ -148,15 +303,41 @@ print_hex
   tax
   lda hexchars, x
   jsr chrout
-  lda #13
-  jsr chrout
   pla
   tax
   lda phtmp
   rts
 
+gcr_disk
+  .byte 'GCR DISK',13,0
+not_a_512_byte_sector_disk
+  .byte 'NOT A 512 BYTE PER SECTOR DISK',13,0
+not_9_sectors_per_track
+  .byte 'NOT 9 SECTORS PER TRACK',13,0
 hexchars
   .byte '0123456789ABCDEF'
+read_cmd
+  .byte 'U0'
+  .byte 0 ; side 0 ( $10 = side 1 )
+  .byte 0 ; track
+  .byte 1 ; sector
+  .byte 0 ; # sectors
+  .byte 0 ; next track
+head       = read_cmd + 2
+track      = read_cmd + 3
+sector     = read_cmd + 4
+nsectors   = read_cmd + 5
+next_track = read_cmd + 6
 inquire_disk_cmd
-  .byte 'U0',4
-
+  .byte 'U0',%00000100,0
+query_disk_format_cmd
+  .byte 'U0',%00001010,0
+sector_interleave_cmd
+  .byte 'U0',%00001000,1
+disk_format_buf
+  .byte 0 ; burst status byte (from offset track)
+  .byte 0 ; number of sectors (per track)
+  .byte 0 ; logical track number
+  .byte 0 ; minimum sector
+  .byte 0 ; maximum sector
+  .byte 0 ; interleave
