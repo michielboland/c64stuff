@@ -321,7 +321,7 @@ send_drive_cmd
   bmi .dnp
   iny
   dex
-  bpl .nextout
+  bne .nextout
   jmp unlsn
 .dnp
   ldx #5 ; device not present error
