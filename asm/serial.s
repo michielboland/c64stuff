@@ -1,6 +1,8 @@
   .include "bootstrap.s"
 
 drive  = 9
+sectors_per_track = 9
+sectors_max = 2 ; for some reason, loading more than 2 sectors does not work
 sec    = $6f
 
 max_track = 40
@@ -109,12 +111,12 @@ chrout = $ffd2
   rts
 .l0
   lda disk_format_buf + 1
-  cmp #9
+  cmp #sectors_per_track
   beq .l1
   PRINT not_9_sectors_per_track
   rts
 .l1
-  SEND_CMD sector_interleave_cmd,4 ; is this necessary?
+  SEND_CMD sector_interleave_cmd,4
 
 read_all_sectors
   ; re-initialize parameters, in case of re-run
@@ -133,12 +135,12 @@ read_all_sectors
   lda #>chs_map
   sta mapptr+1
 .next_head_track
-  lda #9+1
+  lda #sectors_per_track+1
   sec
   sbc sector
-  cmp #2+1
+  cmp #sectors_max+1
   bcc .l0
-  lda #2 ; for some reason, loading more than 2 sectors does not work
+  lda #sectors_max
 .l0
   sta nsectors
   SEND_CMD read_cmd, 7
@@ -211,7 +213,7 @@ update_map
 
 next
   ldx sector
-  cpx #9
+  cpx #sectors_per_track
   inx
   bcc .l1
   ldx #1
