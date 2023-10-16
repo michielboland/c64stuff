@@ -3,7 +3,7 @@
 drive  = 9
 sectors_per_track = 9
 sector_size = 512
-sec    = $6f
+chan15 = $6f
 
 max_track = 40
 
@@ -302,7 +302,7 @@ send_drive_cmd
   sta st
   lda #drive
   jsr listen
-  lda #sec
+  lda #chan15
   jsr second
   bit st
   bmi .dnp
@@ -326,7 +326,7 @@ recv_and_print_drive_status
   jsr clear_burst_mode
   lda #drive
   jsr talk
-  lda #sec
+  lda #chan15
   jsr tksa
 .nextin
   jsr acptr
