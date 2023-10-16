@@ -143,21 +143,20 @@ read_all_sectors
   lda nsectors
   beq .next_head_track
   dec nsectors
-  jsr print_track
   jsr recv_burst_cmd_status
   bcs .err
+  PUTC '.'
   RECV_BURST sector_buf, 512
   jsr copy_sector_buf_to_reu
   jmp .l1
 .err
+  PUTC 'E'
   lda #1
   sta has_errors
   jsr skip_sector_in_reu
   lda #0
   sta nsectors
 .l1
-  PUTC 13
-  PUTC $91
   jsr update_map
   jsr next
   bcc .next_sector
@@ -176,14 +175,6 @@ burst_error
   jsr print_hex
   PUTC ' '
   jmp recv_and_print_drive_status
-
-print_track
-  lda track
-  jsr print_hex
-  lda head
-  jsr print_hex
-  lda sector
-  jmp print_hex
 
 update_map
   ldy #0
@@ -298,7 +289,6 @@ recv_burst_data
   ldx sdr1
   TOGGLE_CLK
   txa
-  inc $d020 ; debug
   sta (rbbuf),y
   inc rbbuf
   bne .next
