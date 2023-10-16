@@ -362,6 +362,7 @@ print_hex
   pla
   tax
   lda phtmp
+  rts
 
 copy_sector_buf_to_reu
   lda #0
