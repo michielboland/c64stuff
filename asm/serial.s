@@ -357,9 +357,16 @@ print_hex
   lda phtmp
   rts
 
+skip_sector_in_reu
+  lda #$80 ; fix C64 address
+  sta reu_control
+  lda #$37 ; fill pattern to indicate error
+  sta sector_buf
+  bne reu_shared
 copy_sector_buf_to_reu
   lda #0
   sta reu_control
+reu_shared
   lda #<sector_buf
   sta reu_c64base
   lda #>sector_buf
@@ -376,7 +383,6 @@ copy_sector_buf_to_reu
   sta reu_translen+1
   lda #%10010000 ; c64 -> REU with immediate execution
   sta reu_command
-skip_sector_in_reu
   lda reubase
   clc
   adc #<512
