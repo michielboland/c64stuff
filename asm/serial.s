@@ -265,13 +265,15 @@ recv_burst_cmd_status
   sta icr1
   bit icr1
   cli
-.l1
   TOGGLE_CLK
+.l1
   lda #$08
 .l0
   bit icr1
   beq .l0
-  lda sdr1
+  ldx sdr1
+  TOGGLE_CLK
+  txa
   sta bst
   and #$0f
   cmp #2
@@ -289,12 +291,13 @@ recv_burst_data
   dec rbsize+1
 .l0
   dec rbsize
-  TOGGLE_CLK
   lda #$08
 .l2
   bit icr1
   beq .l2
-  lda sdr1
+  ldx sdr1
+  TOGGLE_CLK
+  txa
   inc $d020 ; debug
   sta (rbbuf),y
   inc rbbuf
