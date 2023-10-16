@@ -2,7 +2,6 @@
 
 drive  = 9
 sectors_per_track = 9
-sectors_max = 2 ; for some reason, loading more than 2 sectors does not work
 sec    = $6f
 
 max_track = 40
@@ -100,7 +99,7 @@ chrout = $ffd2
   bit bst
   bmi .mfm
   PRINT gcr_disk
-  jmp ioinit
+  jmp exit
 .mfm
   RECV_BURST disk_format_buf, 6
   lda disk_format_buf
@@ -138,10 +137,6 @@ read_all_sectors
   lda #sectors_per_track+1
   sec
   sbc sector
-  cmp #sectors_max+1
-  bcc .l0
-  lda #sectors_max
-.l0
   sta nsectors
   SEND_CMD read_cmd, 7
 .next_sector
@@ -174,12 +169,12 @@ read_all_sectors
 .l2
   lda #13
   sta $d020
-  rts
+exit
+  jmp ioinit
 
 burst_error
   jsr print_hex
   PUTC ' '
-  jsr ioinit
   jmp recv_and_print_drive_status
 
 print_track
@@ -259,14 +254,18 @@ send_burst
 .l0
   bit icr1 ; wait until byte is sent (perhaps not strictly needed)
   beq .l0
-  jmp ioinit
+  rts
 
 recv_burst_cmd_status
+  lda burst_mode
+  bne .l1
   sei
   lda #$7f
+  sta burst_mode
   sta icr1
   bit icr1
   cli
+.l1
   TOGGLE_CLK
   lda #$08
 .l0
@@ -285,7 +284,7 @@ recv_burst_data
   bne .l0
   lda rbsize+1
   bne .l1
-  jmp ioinit
+  rts
 .l1
   dec rbsize+1
 .l0
@@ -304,6 +303,7 @@ recv_burst_data
   jmp .next
 
 send_drive_cmd
+  jsr clear_burst_mode
   lda #0
   sta st
   lda #drive
@@ -329,6 +329,7 @@ send_drive_cmd
   jmp ($0300)
 
 recv_and_print_drive_status
+  jsr clear_burst_mode
   lda #drive
   jsr talk
   lda #sec
@@ -418,6 +419,11 @@ write_map_to_reu
   sta reu_command
   rts
 
+clear_burst_mode
+  lda #0
+  sta burst_mode
+  jmp ioinit
+
 gcr_disk
   .byte 'GCR DISK',13,0
 not_a_512_byte_sector_disk
@@ -456,4 +462,6 @@ reubase
   .byte 0
   .byte 0
 has_errors
+  .byte 0
+burst_mode
   .byte 0
