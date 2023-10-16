@@ -2,6 +2,7 @@
 
 drive  = 9
 sectors_per_track = 9
+sector_size = 512
 sec    = $6f
 
 max_track = 40
@@ -146,7 +147,7 @@ read_all_sectors
   jsr recv_burst_cmd_status
   bcs .err
   PUTC '.'
-  RECV_BURST sector_buf, 512
+  RECV_BURST sector_buf, sector_size
   jsr copy_sector_buf_to_reu
   jmp .l1
 .err
@@ -377,18 +378,18 @@ reu_shared
   sta reu_reubase+1
   lda reubase+2
   sta reu_reubase+2
-  lda #<512
+  lda #<sector_size
   sta reu_translen
-  lda #>512
+  lda #>sector_size
   sta reu_translen+1
   lda #%10010000 ; c64 -> REU with immediate execution
   sta reu_command
   lda reubase
   clc
-  adc #<512
+  adc #<sector_size
   sta reubase
   lda reubase+1
-  adc #>512
+  adc #>sector_size
   sta reubase+1
   lda reubase+2
   adc #0
