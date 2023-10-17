@@ -131,9 +131,8 @@ read_all_sectors
   sta head
   sta track
   sta next_track
-  sta reubase
-  sta reubase+1
-  sta reubase+2
+  sta reupage
+  sta reupage+1
   sta has_errors
   lda #1
   sta sector
@@ -213,6 +212,13 @@ next
   bcc .l1
   ldx #1
   stx sector
+  lda reupage
+  clc
+  adc #sectors_per_track*2
+  sta reupage
+  lda reupage+1
+  adc #0
+  sta reupage+1
   lda head
   eor #$10
   sta head
@@ -380,11 +386,16 @@ reu_shared
   sta reu_c64base
   lda #>sector_buf
   sta reu_c64base+1
-  lda reubase
+  lda #0
   sta reu_reubase
-  lda reubase+1
+  lda sector
+  sec
+  sbc #1
+  asl a
+  adc reupage
   sta reu_reubase+1
-  lda reubase+2
+  lda #0
+  adc reupage+1
   sta reu_reubase+2
   lda #<sector_size
   sta reu_translen
@@ -392,16 +403,6 @@ reu_shared
   sta reu_translen+1
   lda #%10010000 ; c64 -> REU with immediate execution
   sta reu_command
-  lda reubase
-  clc
-  adc #<sector_size
-  sta reubase
-  lda reubase+1
-  adc #>sector_size
-  sta reubase+1
-  lda reubase+2
-  adc #0
-  sta reubase+2
   rts
 
 write_map_to_reu
@@ -411,11 +412,11 @@ write_map_to_reu
   sta reu_c64base
   lda #>chs_map
   sta reu_c64base+1
-  lda reubase
+  lda #0
   sta reu_reubase
-  lda reubase+1
+  lda reupage
   sta reu_reubase+1
-  lda reubase+2
+  lda reupage+1
   sta reu_reubase+2
   lda mapptr
   sec
@@ -501,8 +502,7 @@ disk_format_buf
   .byte 0 ; minimum sector
   .byte 0 ; maximum sector
   .byte 0 ; interleave
-reubase
-  .byte 0
+reupage
   .byte 0
   .byte 0
 has_errors
