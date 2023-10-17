@@ -24,16 +24,22 @@ sclen  = $fd
 ; buffer size fo recv_burst_data
 rbsize = $fd
 
+palnts  = $02a6
+
 sector_buf = $c000
 chs_map    = $c200 ; track/head/sector/status
 
 strout = $ab1e
 
-ta1    = $dc04
-sdr1   = $dc0c
-icr1   = $dc0d
-cra1   = $dc0e
-pra2   = $dd00
+ta1     = $dc04
+todten1 = $dc08
+todsec1 = $dc09
+todmin1 = $dc0a
+todhr1  = $dc0b
+sdr1    = $dc0c
+icr1    = $dc0d
+cra1    = $dc0e
+pra2    = $dd00
 
 reu_command  = $df01
 reu_c64base  = $df02
@@ -117,6 +123,7 @@ chrout = $ffd2
   rts
 .l1
   SEND_CMD sector_interleave_cmd,4
+  jsr timer_start
 
 read_all_sectors
   ; re-initialize parameters, in case of re-run
@@ -210,6 +217,7 @@ next
   eor #$10
   sta head
   bne .l2
+  jsr timer_print
   ldx track
   inx
   cpx #max_track
@@ -423,7 +431,42 @@ write_map_to_reu
 clear_burst_mode
   lda #0
   sta burst_mode
-  jmp ioinit
+  jsr ioinit
+  jmp fix_tod
+
+timer_start
+  lda #$10
+  sta todhr1
+  lda #0
+  sta todmin1
+  sta todsec1
+  sta todten1
+fix_tod
+  lda palnts
+  lsr a
+  lda cra1
+  bcs .pal
+  and #$7f
+  .byte $2c
+.pal
+  ora #$80
+  sta cra1
+  rts
+
+timer_print
+  lda todhr1
+  lda todmin1
+  jsr print_hex
+  PUTC ':'
+  lda todsec1
+  jsr print_hex
+  PUTC '.'
+  lda todten1
+  ora #'0'
+  jsr chrout
+  PUTC 13
+  PUTC $91
+  rts
 
 gcr_disk
   .byte 'GCR DISK',13,0
