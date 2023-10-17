@@ -450,6 +450,7 @@ timer_start
   sta todmin1
   sta todsec1
   sta todten1
+  lda todten1
 fix_tod
   lda palnts
   lsr a
