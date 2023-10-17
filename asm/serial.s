@@ -3,7 +3,7 @@
 drive  = 9
 sectors_per_track = 9
 sector_size = 512
-interleave = 1
+interleave = 4
 chan15 = $6f
 
 max_track = 40
