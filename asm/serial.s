@@ -3,6 +3,7 @@
 drive  = 9
 sectors_per_track = 9
 sector_size = 512
+interleave = 1
 chan15 = $6f
 
 max_track = 40
@@ -141,14 +142,17 @@ read_all_sectors
   lda #>chs_map
   sta mapptr+1
 .next_head_track
-  lda #sectors_per_track+1
-  sec
-  sbc sector
+  lda #sectors_per_track
   sta nsectors
+.next_read
+  lda #0
+  sta last_sector_errored
   SEND_CMD read_cmd, 7
 .next_sector
   lda nsectors
   beq .next_head_track
+  lda last_sector_errored
+  bne .next_read
   dec nsectors
   jsr recv_burst_cmd_status
   bcs .err
@@ -160,9 +164,8 @@ read_all_sectors
   PUTC 'E'
   lda #1
   sta has_errors
+  sta last_sector_errored
   jsr skip_sector_in_reu
-  lda #0
-  sta nsectors
 .l1
   jsr update_map
   jsr next
@@ -207,11 +210,19 @@ update_map
 
 next
   ldx sector
-  cpx #sectors_per_track
+  dex
+  txa
+  clc
+  adc #interleave
+  cmp #sectors_per_track
+  bcc .l0
+  sbc #sectors_per_track
+.l0
+  tax
   inx
-  bcc .l1
-  ldx #1
   stx sector
+  cpx #1
+  bne .l2
   lda reupage
   clc
   adc #sectors_per_track*2
@@ -232,9 +243,6 @@ next
 .l3
   stx track
   stx next_track
-  rts
-.l1
-  stx sector
   rts
 .l2
   clc
@@ -494,7 +502,7 @@ inquire_disk_cmd
 query_disk_format_cmd
   .byte 'U0',%00001010,0
 sector_interleave_cmd
-  .byte 'U0',%00001000,1
+  .byte 'U0',%00001000,interleave
 disk_format_buf
   .byte 0 ; burst status byte (from offset track)
   .byte 0 ; number of sectors (per track)
@@ -508,4 +516,6 @@ reupage
 has_errors
   .byte 0
 burst_mode
+  .byte 0
+last_sector_errored
   .byte 0
