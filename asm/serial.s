@@ -326,7 +326,7 @@ send_burst
   sta sdr1 ; send one byte
   lda #$08
 .l0
-  bit icr1 ; wait until byte is sent (perhaps not strictly needed)
+  bit icr1 ; wait until byte is sent
   beq .l0
   rts
 
