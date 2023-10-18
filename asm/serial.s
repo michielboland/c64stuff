@@ -1,12 +1,50 @@
+; A program to read MS-DOS floppies with a 1571 and an Ultimate64.
+; This requires burst mode on CIA1 and a 512K REU.
+; To speed up the transfer you probably also should disable VIC-II badlines.
+;
+; Once read the contents of the REU can be saved to storage.
+; The first 368640 bytes contain the disk image.
+; These are followed by 2880 status bytes, four for each sector
+; (track/head/sector/status)
+;
+; The program will print a dot for a good read or an E for a bad sector.
+; After each track it will report how long the transfer has taken thus far.
+; At the end of the transfer you will see how long the transfer took in
+; total. The time to transfer an entire disk should be slightly less than
+; two minutes. This is still relatively slow, but probably the best one
+; can do without custom drive code.
+;
+; The border will turn green if the transfer was a complete success.
+; If one or more read errors occurred, the border will turn red at the end.
+
   .include "bootstrap.s"
 
+; Assume 1571 is device #9 - change the number here, or set the device #
+; using the switches on the back of the drive.
+
 drive  = 9
+
+; For now we only support standard 9 sectors/track, 512 bytes/sector disks
+
 sectors_per_track = 9
 sector_size = 512
+
+; We can only transfer one sector at a time. In theory the transfer could
+; be made faster if we can get te 1571 to read and send a complete track
+; in one go, but that would require custom code on the drive.
+; The best we can do for now is use software interleaving to take into
+; account that sectors are lost while we are transferring data to the host.
+
 interleave = 4
+
+; secondary address (used after TALK/LISTEN)
 chan15 = $6f
 
+; MS-DOS disks contain 9 * 2 * 40 = 720 sectors.
+
 max_track = 40
+
+; Zero page storage
 
 ; temp storage for print_hex
 phtmp  = 2
@@ -25,12 +63,28 @@ sclen  = $fd
 ; buffer size fo recv_burst_data
 rbsize = $fd
 
+; Other memory locations
+
+; PAL/NTSC flag (used to initialize the TOD clock)
 palnts  = $02a6
 
 sector_buf = $c000
 chs_map    = $c200 ; track/head/sector/status
 
+; The status byte will be $a1 for a good sector, something greater than
+; that for a bad sector.
+; We currently do not retry reading a bad sector.
+; Instead we just skip and move to the next sector.
+; Bad sectors are filled with $37 ('7') so you can easily spot these.
+; TODO - status 2 probably means the entire track is bad, and 
+; we should just skip the entire track instead of trying to read
+; every sector of that track.
+
+; Useful BASIC function
+
 strout = $ab1e
+
+; CIA registers
 
 ta1     = $dc04
 todten1 = $dc08
@@ -42,11 +96,15 @@ icr1    = $dc0d
 cra1    = $dc0e
 pra2    = $dd00
 
+; REU registers
+
 reu_command  = $df01
 reu_c64base  = $df02
 reu_reubase  = $df04
 reu_translen = $df07
 reu_control  = $df0a
+
+; KERNAL routines
 
 ioinit = $ff84
 second = $ff93
@@ -97,6 +155,8 @@ chrout = $ffd2
   lda #\1
   jsr chrout
   .endm
+
+; Program starts here
 
   jsr send_burst
   SEND_CMD query_disk_format_cmd, 3
@@ -441,6 +501,7 @@ clear_burst_mode
   lda #0
   sta burst_mode
   jsr ioinit
+  ; 50/60Hz bit will be butchered by ioinit above
   jmp fix_tod
 
 timer_start
