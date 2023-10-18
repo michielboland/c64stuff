@@ -549,16 +549,16 @@ hexchars
   .byte '0123456789ABCDEF'
 read_cmd
   .byte 'U0'
+head
   .byte 0 ; side 0 ( $10 = side 1 )
-  .byte 0 ; track
-  .byte 1 ; sector
-  .byte 0 ; # sectors
-  .byte 0 ; next track
-head       = read_cmd + 2
-track      = read_cmd + 3
-sector     = read_cmd + 4
-nsectors   = read_cmd + 5
-next_track = read_cmd + 6
+track
+  .byte 0
+sector
+  .byte 1
+nsectors
+  .byte 0
+next_track
+  .byte 0
 inquire_disk_cmd
   .byte 'U0',%00000100,0
 query_disk_format_cmd
