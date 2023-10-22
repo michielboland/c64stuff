@@ -22,7 +22,7 @@
 ; Assume 1571 is device #9 - change the number here, or set the device #
 ; using the switches on the back of the drive.
 
-drive  = 9
+default_drive  = 9
 
 ; For now we only support standard 9 sectors/track, 512 bytes/sector disks
 
@@ -35,7 +35,7 @@ sector_size = 512
 ; The best we can do for now is use software interleaving to take into
 ; account that sectors are lost while we are transferring data to the host.
 
-interleave = 4
+default_interleave = 4
 
 ; secondary address (used after TALK/LISTEN)
 chan15 = $6f
@@ -48,6 +48,8 @@ max_track = 40
 
 ; temp storage for print_hex
 phtmp  = 2
+; reuse this for input_byte
+ibtmp  = 2
 st     = $90
 mapptr = $a7
 
@@ -115,6 +117,7 @@ untlk  = $ffab
 unlsn  = $ffae
 listen = $ffb1
 talk   = $ffb4
+chrin  = $ffcf
 chrout = $ffd2
 
   .macro PRINT
@@ -156,7 +159,15 @@ chrout = $ffd2
   jsr chrout
   .endm
 
+  .macro ERROR
+  ldx #\1
+  jmp ($0300)
+  .endm
+
 ; Program starts here
+
+  jsr input_drive
+  jsr input_interleave
 
   jsr send_burst
   SEND_CMD query_disk_format_cmd, 3
@@ -273,7 +284,7 @@ next
   dex
   txa
   clc
-  adc #interleave
+  adc interleave
   cmp #sectors_per_track
   bcc .l0
   sbc #sectors_per_track
@@ -382,7 +393,7 @@ send_drive_cmd
   jsr clear_burst_mode
   lda #0
   sta st
-  lda #drive
+  lda drive
   jsr listen
   lda #chan15
   jsr second
@@ -401,12 +412,11 @@ send_drive_cmd
   bne .nextout
   jmp unlsn
 .dnp
-  ldx #5 ; device not present error
-  jmp ($0300)
+  ERROR 5 ; device not present error
 
 recv_and_print_drive_status
   jsr clear_burst_mode
-  lda #drive
+  lda drive
   jsr talk
   lda #chan15
   jsr tksa
@@ -539,12 +549,111 @@ timer_print
   PUTC $91
   rts
 
+input_byte
+  lda #0
+  sta ibtmp
+.l1
+  jsr chrin
+  cmp #13
+  bne .l0
+  lda ibtmp
+  clc
+  rts
+.l0
+  sec
+  sbc #'0'
+  bcc .err
+  cmp #10
+  bcs .err
+  asl ibtmp
+  bcs .err
+  tax
+  lda ibtmp
+  asl a
+  bcs .err
+  asl a
+  bcs .err
+  adc ibtmp
+  bcs .err
+  sta ibtmp
+  txa
+  adc ibtmp
+  bcs .err
+  sta ibtmp
+  bcc .l1
+.err
+  jsr chrin
+  cmp #13
+  bne .err
+  sec
+  rts
+
+input_drive
+  PRINT drive_str
+  lda drive
+  cmp #10
+  bcc .l0
+  tax
+  lda #'1'
+  jsr chrout
+  txa
+  clc
+  adc #'0' - 10
+  jsr chrout
+  PUTC $9d
+  jmp .l1
+.l0
+  adc #'0'
+  jsr chrout
+.l1
+  PUTC $9d
+  jsr input_byte
+  bcs .err
+  cmp #4
+  bcc .err
+  cmp #16
+  bcs .err
+  sta drive
+  PUTC 13
+  rts
+.err
+  ERROR 14 ; illegal quantity
+
+input_interleave
+  PRINT interleave_str
+  lda interleave
+  clc
+  adc #'0'
+  jsr chrout
+  PUTC $9d
+  jsr input_byte
+  bcs .err
+  cmp #0
+  beq .err
+  cmp #3
+  beq .err
+  cmp #6
+  beq .err
+  cmp #9
+  bcs .err
+  sta interleave
+  PUTC 13
+  rts
+.err
+  ERROR 14 ; illegal quantity
+
+
+
 gcr_disk
   .byte 'GCR DISK',13,0
 not_a_512_byte_sector_disk
   .byte 'NOT A 512 BYTE PER SECTOR DISK',13,0
 not_9_sectors_per_track
   .byte 'NOT 9 SECTORS PER TRACK',13,0
+drive_str
+  .byte 'DRIVE? ',0
+interleave_str
+  .byte 'INTERLEAVE? ',0
 hexchars
   .byte '0123456789ABCDEF'
 read_cmd
@@ -564,7 +673,9 @@ inquire_disk_cmd
 query_disk_format_cmd
   .byte 'U0',%00001010,0
 sector_interleave_cmd
-  .byte 'U0',%00001000,interleave
+  .byte 'U0',%00001000
+interleave
+  .byte default_interleave
 disk_format_buf
   .byte 0 ; burst status byte (from offset track)
   .byte 0 ; number of sectors (per track)
@@ -581,3 +692,5 @@ burst_mode
   .byte 0
 last_sector_errored
   .byte 0
+drive
+  .byte default_drive
