@@ -1,6 +1,5 @@
 ; A program to read MS-DOS floppies with a 1571 and an Ultimate64.
 ; This requires burst mode on CIA1 and a 512K REU.
-; To speed up the transfer you probably also should disable VIC-II badlines.
 ;
 ; Once read the contents of the REU can be saved to storage.
 ; The first 368640 bytes contain the disk image.
@@ -19,8 +18,8 @@
 
   .include "bootstrap.s"
 
-; Assume 1571 is device #9 - change the number here, or set the device #
-; using the switches on the back of the drive.
+; Assume 1571 is device #9 - you can either change the default here,
+; or change the device number interactively.
 
 default_drive  = 9
 
@@ -34,6 +33,9 @@ sector_size = 512
 ; in one go, but that would require custom code on the drive.
 ; The best we can do for now is use software interleaving to take into
 ; account that sectors are lost while we are transferring data to the host.
+
+; The default interleave is 4, which appears to result in the fastest
+; read times. The interleave can be configured at runtime.
 
 default_interleave = 4
 
