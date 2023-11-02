@@ -28,11 +28,8 @@ default_drive  = 9
 sectors_per_track = 9
 sector_size = 512
 
-; We can only transfer one sector at a time. In theory the transfer could
-; be made faster if we can get te 1571 to read and send a complete track
-; in one go, but that would require custom code on the drive.
-; The best we can do for now is use software interleaving to take into
-; account that sectors are lost while we are transferring data to the host.
+; We use software interleaving to take into account that sectors
+; are lost while we are transferring data to the host.
 
 ; The default interleave is 4, which appears to result in the fastest
 ; read times. The interleave can be configured at runtime.
