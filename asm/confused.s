@@ -4,6 +4,7 @@ viccry   = $d011
 vicrc    = $d012
 vicirq   = $d019
 vicirqen = $d01a
+vicec    = $d020
 
 cia1icr = $dc0d
 
@@ -82,9 +83,9 @@ n
   .endif
   cpx vicrc
   bne *+2
-  stx 53280
+  stx vicec
   inx
-  stx 53280
+  stx vicec
   rti
 
 nmi
