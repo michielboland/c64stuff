@@ -28,6 +28,8 @@ LINE = 46
   sta cia1tb
   lda #0
   sta cia1tb+1
+  lda #$10
+  sta cia1crb
   lda #<irq
   sta irqvec
   lda #>irq
@@ -51,7 +53,14 @@ LINE = 46
   ldy #0
 
 loop
-  lda ($a1,x)
+  lda #8
+.l0
+  cmp cia1tb
+  bcc .l0
+  nop
+  nop
+  nop
+  nop
   jmp loop
 restore
   sei
@@ -143,6 +152,8 @@ reset
   sta irqvec+1
   lda #27
   sta viccry
+  lda #0
+  sta cia1crb
   cpy #0
   bne exit
   rti
