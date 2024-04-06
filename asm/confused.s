@@ -52,8 +52,7 @@ LINE = 46
 
 loop
   lda ($a1,x)
-  cpy #0
-  beq loop
+  jmp loop
 restore
   sei
   lda #0
@@ -144,7 +143,14 @@ reset
   sta irqvec+1
   lda #27
   sta viccry
+  cpy #0
+  bne exit
   rti
+exit
+  pla
+  pla
+  pla
+  jmp restore
 
 nmi
   iny
