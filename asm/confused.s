@@ -51,12 +51,11 @@ LINE = 46
   sta 1
   cli
   ldy #0
+  ldx #8
 
 loop
-  lda #8
-.l0
-  cmp cia1tb
-  bcc .l0
+  cpx cia1tb
+  bcc loop
   nop
   nop
   nop
