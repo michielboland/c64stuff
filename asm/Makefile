@@ -9,7 +9,8 @@ PRG=crunch.prg border.prg sprite.prg sp.prg xhak.prg bc.prg colors.prg pal.prg \
 	lptest_ntsc.prg sp_ntsc.prg lptest2.crt vsp_tester_ntsc.crt \
 	coltest.prg maxtest.crt colorbars-alt.prg fringe.crt joytest_ntsc.prg \
 	sweep.prg filter_adjust.prg serial.prg calibration-image.prg \
-	calibration-image_ntsc.prg confused.prg confused_ntsc.prg
+	calibration-image_ntsc.prg confused.prg confused_ntsc.prg \
+	combined_wave.prg
 DEPENDS=bootstrap.s
 all: $(PRG)
 $(PRG): $(DEPENDS)
