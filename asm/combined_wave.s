@@ -25,11 +25,11 @@ reu_control  = $df0a
 
   jsr screen_off
 
-  ldx # triangle | pulse
+  ldx # triangle
   ldy #0
   jsr sample
 
-  ldx # sawtooth | pulse
+  ldx # sawtooth
   iny
   jsr sample
 
@@ -37,7 +37,23 @@ reu_control  = $df0a
   iny
   jsr sample
 
+  ldx # triangle | pulse
+  iny
+  jsr sample
+
+  ldx # sawtooth | pulse
+  iny
+  jsr sample
+
   ldx # triangle | sawtooth | pulse
+  iny
+  jsr sample
+
+  ldx # pulse
+  iny
+  jsr sample
+
+  ldx # 0
   iny
   jsr sample
 
@@ -62,7 +78,6 @@ sample
   sta reu_translen
   sta reu_translen + 1
 
-  ldx #80
   lda #%10010000 ; c64 -> REU with immediate execution
   stx w3
   sta reu_command
