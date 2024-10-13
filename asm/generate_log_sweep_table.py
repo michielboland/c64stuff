@@ -2,11 +2,19 @@ import argparse
 import math
 
 
+extra_cycles = 240
+
+
 def printit(bignum, smallnum):
-    b1 = bignum & 0xFF
-    b2 = (bignum >> 8) & 0xFF
-    b3 = (bignum >> 16) & 0xFF
-    print(f"  .byte {b1:3d}, {b2:3d}, {b3:3d}, {smallnum:3d}")
+    adjusted = bignum - extra_cycles
+    assert adjusted > 0
+    b1 = adjusted & 0xFF
+    b2 = (adjusted >> 8) & 0xFF
+    b3 = (adjusted >> 16) & 0xFF
+    print(
+        f"  .byte {b1:3d}, {b2:3d}, {b3:3d}, {smallnum:3d} ; {bignum}"
+        f" - {extra_cycles}"
+    )
 
 
 def main():
