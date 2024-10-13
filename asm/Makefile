@@ -30,5 +30,11 @@ calibration-image_ntsc.prg: calibration-image.s
 confused_ntsc.prg: confused.s
 vsp_tester_ntsc.prg: vsp_tester.s
 joytest_ntsc.prg: joytest.s
+generated/log_sweep_table.s: generate_log_sweep_table.py
+	mkdir -p generated/
+	python3 $< > $@
+generated/log_sweep_table_ntsc.s: generate_log_sweep_table.py
+	mkdir -p generated/
+	python3 $< --ntsc > $@
 clean:
-	rm -f *.prg *.crt
+	rm -rf *.prg *.crt generated/
