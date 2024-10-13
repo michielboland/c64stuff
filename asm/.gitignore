@@ -1,3 +1,5 @@
 *.prg
 *.crt
 tmp/
+/generated/
+/venv/
