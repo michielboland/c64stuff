@@ -10,7 +10,8 @@ PRG=crunch.prg border.prg sprite.prg sp.prg xhak.prg bc.prg colors.prg pal.prg \
 	coltest.prg maxtest.crt colorbars-alt.prg fringe.crt joytest_ntsc.prg \
 	sweep.prg filter_adjust.prg serial.prg calibration-image.prg \
 	calibration-image_ntsc.prg confused.prg confused_ntsc.prg \
-	combined_wave.prg romram.prg filter_sweep.prg
+	combined_wave.prg romram.prg filter_sweep.prg filter_log_sweep.prg \
+	filter_log_sweep_ntsc.prg
 DEPENDS=bootstrap.s
 all: $(PRG)
 $(PRG): $(DEPENDS)
@@ -30,6 +31,8 @@ calibration-image_ntsc.prg: calibration-image.s
 confused_ntsc.prg: confused.s
 vsp_tester_ntsc.prg: vsp_tester.s
 joytest_ntsc.prg: joytest.s
+filter_log_sweep.prg: generated/log_sweep_table.s
+filter_log_sweep_ntsc.prg: filter_log_sweep.s generated/log_sweep_table_ntsc.s
 generated/log_sweep_table.s: generate_log_sweep_table.py
 	mkdir -p generated/
 	python3 $< > $@
