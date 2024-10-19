@@ -3,6 +3,8 @@ import math
 
 
 extra_cycles = 224
+filter_off_value = 15
+filter_on_value = 47
 
 
 def printit(bignum, smallnum):
@@ -31,13 +33,13 @@ def main():
 
     rounded_total = 0
 
-    printit(round(f), 15)
+    printit(round(f), filter_off_value)
 
     for y in range(2, 2049):
         total = math.log(y) / c
         increment = round(total - rounded_total)
         rounded_total += increment
-        printit(increment, 47)
+        printit(increment, filter_on_value)
 
 
 if __name__ == "__main__":
