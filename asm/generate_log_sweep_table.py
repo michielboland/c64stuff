@@ -2,7 +2,7 @@ import argparse
 import math
 
 
-extra_cycles = 240
+extra_cycles = 224
 
 
 def printit(bignum, smallnum):

@@ -16,9 +16,6 @@ ptr = 251
   sta icr1
 
 loop
-  inc ec
-  dec ec
-
   lda counter
   and #7
   sta filtertmp
@@ -56,10 +53,7 @@ loop
   sta 54293
   stx 54294
 
-  tya
-  lsr a
-  lsr a
-  and #8
+  lda counter
   sta ec
 
   ldy #2
