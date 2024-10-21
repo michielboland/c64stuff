@@ -2,6 +2,7 @@ icr1 = $dc0d
 cry = 53265
 ec = 53280
 ptr = 251
+resonance = 0
 
   .include "bootstrap.s"
 
@@ -10,7 +11,7 @@ ptr = 251
   bpl .l0
   lda #11
   sta cry
-  lda #248
+  lda #(resonance << 4) + 0xf
   sta 54295
   lda #$7f
   sta icr1

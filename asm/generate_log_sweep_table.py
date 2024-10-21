@@ -5,6 +5,7 @@ import math
 extra_cycles = 224
 filter_off_value = 15
 filter_on_value = 47
+duration = 11
 
 
 def printit(bignum, smallnum):
@@ -28,7 +29,7 @@ def main():
         f = 11250000 / 11
     else:
         f = 17734475 / 18
-    cycles = round(6 * f)
+    cycles = round(duration * f)
     c = math.log(2048) / cycles
 
     rounded_total = 0
