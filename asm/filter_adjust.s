@@ -5,104 +5,112 @@ cr    = 13
 right = 29
 up    = 145
 left  = 157
+palnts  = $02a6
+
+pra1 = 56320
+prb1 = 56321
+ta1 =  56324
+tb1 =  56326
+icr1 = 56333
+cra1 = 56334
+crb1 = 56335
+
+  ; PAL : 11 sec = 1823 * 5945 cycles (more or less)
+  ; NTSC : 11 sec = 3125 * 3600 cycles
+
+pal1 = 1823 - 1
+pal2 = 5945 - 1
+nts1 = 3125 - 1
+nts2 = 3600 - 1
 
 linprt = $bdcd ; print integer represented by a (hi) x (lo)
 strout = $ab1e
 
 scratch = 2
+filt = 251
+
+  lda #0
+  sta filt
+
+  ldx #maxfilt
+  lda #0
+  jsr linprt
+  lda #<press_space
+  ldy #>press_space
+  jsr strout
+
+  sei
+  lda #%00010000
+check_space
+  bit prb1
+  bne check_space
+
+  lda #11
+  sta 53265
+
+  lda #$7f
+  sta icr1
+  lda icr1
+  lda palnts
+  bne pal
+  ; ntsc
+  lda #<nts1
+  sta ta1
+  lda #>nts1
+  sta ta1+1
+  lda #<nts2
+  sta tb1
+  lda #>nts2
+  sta tb1+1
+  jmp start_timers
+pal
+  lda #<pal1
+  sta ta1
+  lda #>pal1
+  sta ta1+1
+  lda #<pal2
+  sta tb1
+  lda #>pal2
+  sta tb1+1
+start_timers
+  lda #%00010001 ; load and start timer a
+  sta cra1
+  lda #%01010001 ; load and start timer b; timer b counts ta underflows
+  sta crb1
+  lda #%10000010 ; irq on timer b underflow
+  sta icr1
 
   lda #$2f
   sta 54296
-  lda #$f8
+  lda #$08
   sta 54295
-  jmp printfilt
-start
-  jsr $ffe4
-  beq *-3
-  cmp #end
-  bne *+3
-  rts
-  cmp #cr
-  bne *+5
-  jsr toggle
-  cmp #left
-  bne *+5
-  jsr subsmall
-  cmp #right
-  bne *+5
-  jsr addsmall
-printfilt
-  jsr setfilt
+loop
   lda filt
-  asl
-  tay
-  ldx filters, y
-  lda filters + 1, y
-  jsr printit
-  lda #<padret
-  ldy #>padret
-  jsr strout
-  jmp start
-
-printit
-  jsr linprt
-  lda #<spc
-  ldy #>spc
-  jmp strout
-
-subsmall
-  pha
-  lda filt
-  beq .l0
-  sec
-  sbc #1
-  sta filt
-.l0
-  pla
-  rts
-
-addsmall
-  pha
-  lda filt
-  clc
-  adc #1
-  cmp #maxfilt
-  beq .l0
-  sta filt
-.l0
-  pla
-  rts
-
-setfilt
-  lda filt
-  sta 53280
+  sta 53280 ; some visual feedback
   asl
   tay
   lda filters + 1, y
   sta scratch
   lda filters, y
-  tax
+  sta 54293
   .rept 3
   lsr scratch
   ror
   .endr
-  sta hi
-  txa
-  and #7
-  sta lo
-
-  lda #0
-  ldx lo
-  jsr printit
-  lda #0
-  ldx hi
-  jsr printit
-
-  ldy lo
-  lda hi
-  sty 54293
   sta 54294
-  rts
+test
+  bit icr1
+  bpl test
+  lda filt
+  clc
+  adc #1
+  cmp #maxfilt
+  bne .l0
+  lda #0
+.l0
+  sta filt
+  jmp loop
+
 
 toggle
   pha
@@ -116,14 +124,10 @@ spc
   .byte " ", 0
 padret
   .byte "     ", cr, up, 0
+press_space
+  .byte " CYCLES. PRESS SPACE OR FIRE", cr
+  .byte "ON JOYSTICK IN PORT 1 TO START.", cr, 0
 
-filt
-  .byte 0
-
-lo
-  .byte 0
-hi
-  .byte 0
 filters
   .word 0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 13, 16, 19, 23, 27, 32, 38, 45
   .word 54, 64, 76, 91, 108, 128, 152, 181, 215, 256, 304, 362, 431, 512
