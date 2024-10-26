@@ -1,10 +1,6 @@
   .include "bootstrap.s"
 
-end   = 4 ; ctrl-D
 cr    = 13
-right = 29
-up    = 145
-left  = 157
 palnts  = $02a6
 
 pra1 = 56320
@@ -111,19 +107,6 @@ test
   sta filt
   jmp loop
 
-
-toggle
-  pha
-  lda 53265
-  eor #16
-  sta 53265
-  pla
-  rts
-
-spc
-  .byte " ", 0
-padret
-  .byte "     ", cr, up, 0
 press_space
   .byte " CYCLES. PRESS SPACE OR FIRE", cr
   .byte "ON JOYSTICK IN PORT 1 TO START.", cr, 0
