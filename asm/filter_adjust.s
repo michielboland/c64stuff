@@ -24,6 +24,7 @@ strout = $ab1e
 
 scratch = 2
 filt = 251
+counter = 252
 
   lda #0
   sta filt
@@ -77,6 +78,11 @@ start_timers
   sta crb1
   lda #%10000010 ; irq on timer b underflow
   sta icr1
+  lda #<isr
+  sta $0314
+  lda #>isr
+  sta $0315
+  cli
 
   lda #$2f
   sta 54296
@@ -95,9 +101,10 @@ loop
   ror
   .endr
   sta 54294
+  lda counter
 test
-  bit icr1
-  bpl test
+  cmp counter
+  beq test
   lda filt
   clc
   adc #1
@@ -107,6 +114,10 @@ test
 .l0
   sta filt
   jmp loop
+
+isr
+  inc counter
+  jmp $ea7e
 
 press_space
   .byte " CYCLES. PRESS SPACE OR FIRE", cr
