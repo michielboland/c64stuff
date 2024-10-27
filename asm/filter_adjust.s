@@ -43,6 +43,8 @@ check_space
 
   lda #11
   sta 53265
+  lda #0
+  sta 53280
 
   lda #$7f
   sta icr1
@@ -82,7 +84,6 @@ start_timers
   sta 54295
 loop
   lda filt
-  sta 53280 ; some visual feedback
   asl
   tay
   lda filters + 1, y
