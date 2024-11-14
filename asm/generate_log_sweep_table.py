@@ -2,20 +2,18 @@ import argparse
 import math
 
 
-extra_cycles = 224
-filter_off_value = 15
-filter_on_value = 47
+extra_cycles = 211
 duration = 11
 
 
-def printit(bignum, smallnum):
+def printit(bignum):
     adjusted = bignum - extra_cycles
     assert adjusted > 0
     b1 = adjusted & 0xFF
     b2 = (adjusted >> 8) & 0xFF
     b3 = (adjusted >> 16) & 0xFF
     print(
-        f"  .byte {b1:3d}, {b2:3d}, {b3:3d}, {smallnum:3d} ; {bignum}"
+        f"  .byte {b1:3d}, {b2:3d}, {b3:3d}, 0 ; {bignum}"
         f" - {extra_cycles}"
     )
 
@@ -34,13 +32,13 @@ def main():
 
     rounded_total = 0
 
-    printit(round(f), filter_off_value)
+    printit(round(f))
 
     for y in range(2, 2049):
         total = math.log(y) / c
         increment = round(total - rounded_total)
         rounded_total += increment
-        printit(increment, filter_on_value)
+        printit(increment)
 
 
 if __name__ == "__main__":

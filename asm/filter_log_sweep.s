@@ -13,6 +13,8 @@ resonance = 0
   sta cry
   lda #(resonance << 4) + 0xf
   sta 54295
+  lda #$2f
+  sta 54296
   lda #$7f
   sta icr1
 
@@ -44,13 +46,8 @@ loop
   adc #>table
   sta ptr+1
 
-  ldy #3
-  lda (ptr), y
-  tay
-
   lda filtertmp
   ldx filtertmp+1
-  sty 54296
   sta 54293
   stx 54294
 
