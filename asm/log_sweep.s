@@ -2,10 +2,15 @@ icr1 = $dc0d
 cry = 53265
 ec = 53280
 ptr = 251
+fptr = 253
 resonance = 0
 
   .include "bootstrap.s"
 
+  ; 080d
+  lda #0                              
+  sta counter
+  sta counter+1
 .l0
   bit cry
   bpl .l0
@@ -16,20 +21,70 @@ resonance = 0
   lda #$2f
   sta 54296
   lda #$7f
+  lda #240
+  sta 54278
+  lda #8
+  sta 54276
+  lda #0
+  sta 54272
+  sta 54273
+  lda #$21
+  sta 54276
   sta icr1
 
 loop
-  lda counter
+  lda counter+1
+  and #$f8
+  lsr a
+  lsr a
+  adc #<filters
+  sta fptr
+  lda #0
+  adc #>filters
+  sta fptr+1
+
+  ldy #0
+  lda (fptr), y
+  tax
   and #7
-  sta filtertmp
+  sta tmp
+  txa
+  sta tmp+1
+  iny
+  lda (fptr), y
+  .rept 3
+  lsr a
+  ror tmp+1
+  .endr
+
+  lda tmp
+  ldy tmp+1
+  sta 54293
+  sty 54294
+
   lda counter
-  sta filtertmp+1
+  tax
+  and #7
+  lsr a
+  .rept 3
+  ror a
+  .endr
+  sta tmp
+  txa
+  sta tmp+1
   lda counter+1
   .rept 3
   lsr a
-  ror filtertmp+1
+  ror tmp+1
   .endr
-  lda counter
+
+  lda tmp
+  ldy tmp+1
+  sta 54272
+  sty 54273
+
+  txa
+  sta ec
   sta ptr
   lda counter+1
   .rept 2
@@ -45,14 +100,6 @@ loop
   lda ptr+1
   adc #>table
   sta ptr+1
-
-  lda filtertmp
-  ldx filtertmp+1
-  sta 54293
-  stx 54294
-
-  lda counter
-  sta ec
 
   ldy #2
   lda (ptr), y
@@ -105,6 +152,7 @@ loop
   lsr a
   bcs *+2
   lsr a
+  ; 0900
   bcs *+2
   bcs *+2
   lsr a
@@ -162,13 +210,20 @@ delay
 counter
   .word 0
 
-filtertmp
+tmp
   .word 0
+
+  .align 1
+filters
+  .word 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 12, 16
+  .word 21, 27, 34, 44, 56, 71, 91, 116, 147, 188, 238, 303, 385, 489, 621
+  .word 788, 1001, 1270, 1612, 2047
+
 
   .align 2
 table
   .ifdef NTSC
-  .include "generated/filter_log_sweep_table_ntsc.s"
+  .include "generated/log_sweep_table_ntsc.s"
   .else
-  .include "generated/filter_log_sweep_table.s"
+  .include "generated/log_sweep_table.s"
   .endif
