@@ -4,6 +4,10 @@ ec = 53280
 ptr = 251
 fptr = 253
 resonance = 0
+waveform = $21
+v1f  = 54272
+v1w  = 54276
+v1sr = 54278
 
   .include "bootstrap.s"
 
@@ -11,6 +15,7 @@ resonance = 0
   lda #0                              
   sta counter
   sta counter+1
+  sta counter+2
 .l0
   bit cry
   bpl .l0
@@ -18,29 +23,50 @@ resonance = 0
   sta cry
   lda #(resonance << 4) + 0xf
   sta 54295
-  lda #$2f
-  sta 54296
   lda #$7f
   lda #240
-  sta 54278
+  sta v1sr
   lda #8
-  sta 54276
+  sta v1w
   lda #0
-  sta 54272
-  sta 54273
-  lda #$21
-  sta 54276
+  sta v1f
+  sta v1f+1
+  lda #waveform
+  sta v1w
+  lda #$7f
   sta icr1
+  jmp loop
+exit
+  lda #0
+  sta v1sr
+  lda #8
+  sta v1w
+  lda #0
+  sta v1f
+  sta v1f+1
+  sta v1w
+  lda #$81
+  sta icr1
+  lda #27
+  sta cry
+  lda #14
+  sta ec
+  rts
 
 loop
+  ldx counter+2
+  lda filters, x
+  beq exit
+  sta 54296
+
   lda counter+1
   and #$f8
   lsr a
   lsr a
-  adc #<filters
+  adc #<cutoffs
   sta fptr
   lda #0
-  adc #>filters
+  adc #>cutoffs
   sta fptr+1
 
   ldy #0
@@ -80,8 +106,8 @@ loop
 
   lda tmp
   ldy tmp+1
-  sta 54272
-  sty 54273
+  sta v1f
+  sty v1f+1
 
   txa
   sta ec
@@ -102,6 +128,7 @@ loop
   sta ptr+1
 
   ldy #2
+  ; 0900
   lda (ptr), y
   tax
 
@@ -152,7 +179,6 @@ loop
   lsr a
   bcs *+2
   lsr a
-  ; 0900
   bcs *+2
   bcs *+2
   lsr a
@@ -169,6 +195,9 @@ loop
   lda counter+1
   adc #0
   sta counter+1
+  lda counter+2
+  adc #0
+  sta counter+2
   jmp loop
 
 hugedelay
@@ -208,16 +237,20 @@ delay
   rts
 
 counter
-  .word 0
+  .word 0, 0
 
 tmp
   .word 0
 
   .align 1
-filters
+cutoffs
   .word 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 12, 16
   .word 21, 27, 34, 44, 56, 71, 91, 116, 147, 188, 238, 303, 385, 489, 621
   .word 788, 1001, 1270, 1612, 2047
+
+  .align 3
+filters
+  .byte $2f, $1f, $4f, $5f, 0
 
 
   .align 2

@@ -44,9 +44,9 @@ generated/filter_log_sweep_table_ntsc.s: generate_log_sweep_table.py
 	python3 $< --ntsc > $@
 generated/log_sweep_table.s: generate_log_sweep_table.py Makefile
 	mkdir -p generated/
-	python3 $< --extra-cycles=303 > $@
+	python3 $< --duration=6 --extra-cycles=327 > $@
 generated/log_sweep_table_ntsc.s: generate_log_sweep_table.py Makefile
 	mkdir -p generated/
-	python3 $< --extra-cycles=303 --ntsc > $@
+	python3 $< --duration=6 --extra-cycles=327 --ntsc > $@
 clean:
 	rm -rf *.prg *.crt generated/
