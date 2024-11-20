@@ -3,6 +3,13 @@
 cr    = 13
 palnts  = $02a6
 
+irqvec = $0314
+iokeys = $fddd
+restor = $ff8a
+
+viccry = 53265
+vicec = 53280
+
 pra1 = 56320
 prb1 = 56321
 ta1 =  56324
@@ -11,25 +18,33 @@ icr1 = 56333
 cra1 = 56334
 crb1 = 56335
 
-  ; PAL : 11 sec = 1823 * 5945 cycles (more or less)
-  ; NTSC : 11 sec = 3125 * 3600 cycles
+  ; PAL :   2 sec = 79 * 24943 cycles (more or less)
+  ; NTSC :  2 sec = 1307 * 1565 cycles
 
-pal1 = 1823 - 1
-pal2 = 5945 - 1
-nts1 = 3125 - 1
-nts2 = 3600 - 1
+pal1 = 79 - 1
+pal2 = 24943 - 1
+nts1 = 1307 - 1
+nts2 = 1565 - 1
 
 linprt = $bdcd ; print integer represented by a (hi) x (lo)
 strout = $ab1e
 
 scratch = 2
-filt = 251
-counter = 252
+cutoff_counter = 251
+irq_counter = 252
+type_counter = 253
 
   lda #0
-  sta filt
+  sta cutoff_counter
+  sta type_counter
 
-  ldx #maxfilt
+  ldx #nfilters
+  lda #0
+  jsr linprt
+  lda #<rounds
+  ldy #>rounds
+  jsr strout
+  ldx #ncutoffs
   lda #0
   jsr linprt
   lda #<press_space
@@ -43,9 +58,9 @@ check_space
   bne check_space
 
   lda #11
-  sta 53265
+  sta viccry
   lda #0
-  sta 53280
+  sta vicec
 
   lda #$7f
   sta icr1
@@ -79,52 +94,72 @@ start_timers
   lda #%10000010 ; irq on timer b underflow
   sta icr1
   lda #<isr
-  sta $0314
+  sta irqvec
   lda #>isr
-  sta $0315
+  sta irqvec+1
   cli
 
-  lda #$2f
-  sta 54296
   lda #$08
   sta 54295
 loop
-  lda filt
+  ldx type_counter
+  lda filter, x
+  sta 54296
+  lda cutoff_counter
   asl
   tay
-  lda filters + 1, y
+  lda cutoffs + 1, y
   sta scratch
-  lda filters, y
+  lda cutoffs, y
   sta 54293
   .rept 3
   lsr scratch
   ror
   .endr
   sta 54294
-  lda counter
+  lda irq_counter
 test
-  cmp counter
+  cmp irq_counter
   beq test
-  lda filt
+  lda cutoff_counter
   clc
   adc #1
-  cmp #maxfilt
-  bne .l0
+  sta cutoff_counter
+  cmp #ncutoffs
+  bne loop
   lda #0
-.l0
-  sta filt
-  jmp loop
+  sta cutoff_counter
+  lda type_counter
+  clc
+  adc #1
+  sta type_counter
+  cmp #nfilters
+  bne loop
+  lda #27
+  sta viccry
+  lda #14
+  sta vicec
+  sei
+  jsr iokeys
+  jsr restor
+  cli
+  rts
 
 isr
-  inc counter
+  inc irq_counter
   jmp $ea7e
 
+rounds
+  .byte " ROUNDS OF ", 0
 press_space
-  .byte " CYCLES. PRESS SPACE OR FIRE", cr
+  .byte " CYCLES. PRESS SPACE", cr, "OR FIRE "
   .byte "ON JOYSTICK IN PORT 1 TO START.", cr, 0
 
-filters
+filter
+  .byte $2f, $1f, $4f, $5f
+nfilters = * - filter
+cutoffs
   .word 0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 13, 16, 19, 23, 27, 32, 38, 45
   .word 54, 64, 76, 91, 108, 128, 152, 181, 215, 256, 304, 362, 431, 512
   .word 609, 724, 861, 1024, 1218, 1448, 1722, 2047
-maxfilt = (* - filters) / 2
+ncutoffs = (* - cutoffs) / 2
