@@ -29,6 +29,7 @@ vsp_tester_ntsc.crt: vsp_tester_ntsc.prg
 50demo3_ntsc.prg: 50demo3.s
 calibration-image_ntsc.prg: calibration-image.s
 confused_ntsc.prg: confused.s
+serial.prg: input_byte.s
 vsp_tester_ntsc.prg: vsp_tester.s
 joytest_ntsc.prg: joytest.s
 filter_log_sweep.prg: generated/filter_log_sweep_table.s
