@@ -34,6 +34,30 @@ cutoff_counter = 251
 irq_counter = 252
 type_counter = 253
 
+  .macro PRINT
+  lda #<\1
+  ldy #>\1
+  jsr strout
+  .endm
+
+  PRINT resonance
+  jsr input_byte
+  bcc .ok
+.err
+  ldx #14
+  jmp ($0300)
+.ok
+  cmp #16
+  bcs .err
+
+  .rept 4
+  asl a
+  .endr
+  ora #8
+  sta 54295
+
+  PRINT return
+
   lda #0
   sta cutoff_counter
   sta type_counter
@@ -41,15 +65,11 @@ type_counter = 253
   ldx #nfilters
   lda #0
   jsr linprt
-  lda #<rounds
-  ldy #>rounds
-  jsr strout
+  PRINT rounds
   ldx #ncutoffs
   lda #0
   jsr linprt
-  lda #<press_space
-  ldy #>press_space
-  jsr strout
+  PRINT press_space
 
   sei
   lda #%00010000
@@ -99,8 +119,6 @@ start_timers
   sta irqvec+1
   cli
 
-  lda #$08
-  sta 54295
 loop
   ldx type_counter
   lda filter, x
@@ -149,11 +167,17 @@ isr
   inc irq_counter
   jmp $ea7e
 
+  .include "input_byte.s"
+
+resonance
+  .byte "RESONANCE? ", 0
 rounds
   .byte " ROUNDS OF ", 0
 press_space
   .byte " CYCLES. PRESS SPACE", cr, "OR FIRE "
-  .byte "ON JOYSTICK IN PORT 1 TO START.", cr, 0
+  .byte "ON JOYSTICK IN PORT 1 TO START."
+return
+  .byte cr, 0
 
 filter
   .byte $2f, $1f, $4f, $5f
