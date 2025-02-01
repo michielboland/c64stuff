@@ -80,8 +80,6 @@ init_line
   rts
 
 build_line
-  ; X=column
-  ; Y=row
   stx column
   sty row
   lda colors, y
