@@ -28,24 +28,6 @@ rst_handler
   inx
   bne .clr
 .loop
-  stx $d800
-  inx
-  stx $d801
-  inx
-  stx $d802
-  inx
-  lda $d800
-  sta $d803
-  lda $d801
-  sta $d804
-  lda $d802
-  sta $d805
-.l0
-  bit 53265
-  bpl .l0
-.l1
-  bit 53265
-  bmi .l1
   jmp .loop
 
 ; graphics
