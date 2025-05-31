@@ -2,7 +2,6 @@ icr1 = $dc0d
 cry = 53265
 ec = 53280
 ptr = 251
-resonance = 0
 
   .include "bootstrap.s"
 
@@ -11,14 +10,31 @@ resonance = 0
   bpl .l0
   lda #11
   sta cry
-  lda #(resonance << 4) + 0xf
-  sta 54295
-  lda #$2f
-  sta 54296
   lda #$7f
   sta icr1
+  lda #240
+  sta 54278
+  lda #129
+  sta 54276
+  lda #255
+  sta 54272
+  sta 54273
 
 loop
+  lda counter+1
+  asl a
+  lda counter+2
+  rol a
+  .rept 4
+  asl a
+  .endr
+  ora #$0f
+  sta 54296
+  lda counter+1
+  asl a
+  ora #$0f
+  sta 54295
+
   lda counter
   and #7
   sta filtertmp
@@ -121,7 +137,12 @@ loop
   lda counter+1
   adc #0
   sta counter+1
+  lda counter+2
+  adc #0
+  sta counter+2
   jmp loop
+
+  .align 8
 
 hugedelay
   txa
@@ -160,7 +181,8 @@ delay
   rts
 
 counter
-  .word 0
+  .word $8000
+  .byte 0
 
 filtertmp
   .word 0

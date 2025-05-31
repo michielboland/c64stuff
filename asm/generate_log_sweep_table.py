@@ -17,8 +17,8 @@ def printit(bignum, extra_cycles):
 def main():
     argp = argparse.ArgumentParser()
     argp.add_argument("--ntsc", action="store_true")
-    argp.add_argument("--duration", type=int, default=11)
-    argp.add_argument("--extra-cycles", type=int, default=211)
+    argp.add_argument("--duration", type=int, default=6)
+    argp.add_argument("--extra-cycles", type=int, default=259)
     args = argp.parse_args()
 
     if args.ntsc:
