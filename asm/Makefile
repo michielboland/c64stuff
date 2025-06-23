@@ -32,6 +32,7 @@ confused_ntsc.prg: confused.s
 serial.prg filter_adjust.prg: input_byte.s
 vsp_tester_ntsc.prg: vsp_tester.s
 joytest_ntsc.prg: joytest.s
+vic20colorbars_ntsc.prg: vic20colorbars.s
 filter_log_sweep.prg: generated/filter_log_sweep_table.s
 filter_log_sweep_ntsc.prg: filter_log_sweep.s \
 	generated/filter_log_sweep_table_ntsc.s

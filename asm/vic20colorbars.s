@@ -11,7 +11,11 @@ space = $1200
 sp = 251
 cp = 253
 
+  .ifdef NTSC
+rows = 14
+  .else
 rows = 17
+  .endif
 columns = 24
 
   ldx #15
@@ -60,7 +64,11 @@ do_row:
   dex
   bne do_row
 
+  .ifdef NTSC
+  lda #2
+  .else
   lda #10
+  .endif
   sta $9000 ; horizontal centering
   lda #17
   sta $9001 ; vertical centering
@@ -97,12 +105,18 @@ rc_zero:
   bit $9003
   bpl *+2
 
+  .ifdef NTSC
+  .rept 19
+  nop
+  .endr
+  .endif
+
 loop:
+  .ifndef NTSC
+  .rept 5
   nop
-  nop
-  nop
-  nop
-  nop
+  .endr
+  .endif
   lda #$19
   sta ec
   lda #$a9
@@ -123,15 +137,27 @@ loop:
   sta ec
   nop
   nop
+  .ifdef NTSC
+  nop
+  nop
+  .endif
   jmp loop
 
 delay:
+  .ifdef NTSC
+  ldy #8
+  .else
   ldy #9
+  .endif
 .l:
   dey
   bne .l
+  .ifdef NTSC
+  bit 0
+  .else
   nop
   nop
+  .endif
   rts
 
 vm_data:
