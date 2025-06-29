@@ -267,7 +267,6 @@ top
   lda 53280
   cmp #240
   beq reset
-  lda #1
   lda 53273
   sta 53273
   jmp loop
