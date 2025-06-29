@@ -46,11 +46,11 @@ generated/filter_log_sweep_table.s: generate_log_sweep_table.py
 generated/filter_log_sweep_table_ntsc.s: generate_log_sweep_table.py
 	mkdir -p generated/
 	python3 $< --ntsc > $@
-generated/log_sweep_table.s: generate_log_sweep_table.py Makefile
+generated/log_sweep_table.s: generate_log_sweep_table.py log_sweep_table.args
 	mkdir -p generated/
-	python3 $< --extra-cycles=327 > $@
-generated/log_sweep_table_ntsc.s: generate_log_sweep_table.py Makefile
+	python3 $< `cat log_sweep_table.args` > $@
+generated/log_sweep_table_ntsc.s: generate_log_sweep_table.py log_sweep_table.args
 	mkdir -p generated/
-	python3 $< --extra-cycles=327 --ntsc > $@
+	python3 $< `cat log_sweep_table.args` --ntsc > $@
 clean:
 	rm -rf *.prg *.crt generated/
