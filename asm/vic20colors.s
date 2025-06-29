@@ -1,13 +1,34 @@
   .include "vic20bootstrap.s"
 
-rc = $9004
-ec = $900f
+cr0 = $9000
+cr1 = $9001
+cr2 = $9002
+cr3 = $9003
+cr4 = $9004
+crf = $900f
+
 offset = 34
 
-  lda #7
-  sta $9000
-  lda #$9b
-  sta $9002
+  .ifdef NTSC
+  lda #1
+  .else
+  lda #5
+  .endif
+  sta cr0
+  .ifdef NTSC
+  lda #offset + 2
+  .else
+  lda #offset + 4
+  .endif
+  sta cr1
+  .ifdef NTSC
+  lda #25 | $80
+  .else
+  lda #29 | $80
+  .endif
+  sta cr2
+  lda #17 << 1 ; add extra row for security
+  sta cr3
 
   ; clear screen
   jsr $e55f
@@ -17,50 +38,70 @@ start:
   ldx #16
   lda #offset
 not_offsetreached:
-  cmp rc
+  cmp cr4
   bne not_offsetreached
-  lda rc
-not_nextline:
-  cmp rc
-  beq not_nextline
-  jsr delay
-  lda rc
-  cmp rc
-  bne .l
+at_offset:
+  cmp cr4
+  beq at_offset
+  ; LSB of raster counter is now guaranteed to be zero
+  jsr delay ; delay 62 (PAL) / 56 (NTSC) cycles
+  bit cr3
+  bmi .l
   bit 0
   nop
 .l:
   jsr delay
-  lda rc
-  cmp rc
-  beq *+2
-  beq *+2
+  bit cr3
+  bmi *+2
+  bmi *+2
   jsr delay
-  lda rc
-  cmp rc
-  beq *+2
+  bit cr3
+  bpl *+2
+
+  .ifdef NTSC
+  ldy #6
+  .else
+  ldy #41
+  .endif
+.l1:
+  dey
+  bne .l1
 
 nextbar:
   lda colors,x
-  sta ec
+  sta crf
+  .ifdef NTSC
+  ldy #100
+  .else
   ldy #110
+  .endif
 .l:
   dey
   bne .l
   nop
   nop
+  .ifdef NTSC
+  nop
+  .endif
   dex
   bpl nextbar
   jmp start
 
 delay:
-  ldy #22
+  .ifdef NTSC
+  ldy #8
+  .else
+  ldy #9
+  .endif
 .l0:
   dey
   bne .l0
+  .ifdef NTSC
+  bit 0
+  .else
   nop
   nop
-  nop
+  .endif
   rts
 
 colors:

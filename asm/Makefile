@@ -35,6 +35,7 @@ vsp_tester_ntsc.prg: vsp_tester.s
 joytest_ntsc.prg: joytest.s
 vic20colorbars_ntsc.prg: vic20colorbars.s
 vic20bar-glitch_ntsc.prg: vic20bar-glitch.s
+vic20colors_ntsc.prg: vic20colors.s
 filter_log_sweep.prg: generated/filter_log_sweep_table.s
 filter_log_sweep_ntsc.prg: filter_log_sweep.s \
 	generated/filter_log_sweep_table_ntsc.s
