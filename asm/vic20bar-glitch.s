@@ -16,7 +16,7 @@ rows = 8
 columns = 25
   .else
 rows = 10
-columns = 29
+columns = 30
   .endif
 
   ldx #15
@@ -66,10 +66,10 @@ do_row:
   .ifdef NTSC
   lda #$1
   .else
-  lda #5
+  lda #4
   .endif
   sta $9000 ; horizontal centering
-  lda #11
+  lda #5
   sta $9001 ; vertical centering
   lda #columns | $80
   sta $9002
@@ -111,10 +111,7 @@ rc_zero:
   bit 0
   .else
   nop
-  nop
-  nop
-  nop
-  nop
+  bit 0
   .endif
 
 loop:
@@ -133,7 +130,7 @@ loop:
   lda #$fb ; 42
   sta ec   ; 36
   stx ec   ; 50
-  lda #$ef ; 52 ; secret column
+  lda #$ef ; 52 ; secret column (ntsc)
   sta ec   ; 55
   stx ec   ; 60
   nop      ; 62
