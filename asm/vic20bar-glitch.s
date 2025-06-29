@@ -4,23 +4,25 @@ rc = $9004
 ec = $900f
 
 screen = $1e00
+color_ram = $9600
 
-space = $1200
+glyph = $1200
 
 sp = 251
+cp = 253
 
   .ifdef NTSC
 rows = 8
 columns = 25
   .else
 rows = 10
-columns = 28
+columns = 29
   .endif
 
   ldx #15
 .l:
-  lda #0
-  sta space,x
+  lda glyph_def,x
+  sta glyph,x
   dex
   bpl .l
 
@@ -28,6 +30,10 @@ columns = 28
   sta sp
   lda #>screen
   sta sp+1
+  lda #<color_ram
+  sta cp
+  lda #>color_ram
+  sta cp+1
   ldx #rows
 
 do_row:
@@ -35,6 +41,7 @@ do_row:
   lda #32
 .l:
   sta (sp),y
+  sta (cp),y
   dey
   bpl .l
   lda sp
@@ -44,15 +51,22 @@ do_row:
   lda sp+1
   adc #0
   sta sp+1
+  lda cp
+  clc
+  adc #columns
+  sta cp
+  lda cp+1
+  adc #0
+  sta cp+1
   dex
   bne do_row
 
   ldx #$18 ; pre-load base colour since there is no time to do this later
 
   .ifdef NTSC
-  lda #$81
+  lda #$1
   .else
-  lda #6
+  lda #5
   .endif
   sta $9000 ; horizontal centering
   lda #11
@@ -146,3 +160,21 @@ delay:
   nop
   .endif
   rts
+
+glyph_def
+  .byte %00000000
+  .byte %00000000
+  .byte %00000000
+  .byte %00000000
+  .byte %00000000
+  .byte %00000000
+  .byte %00000000
+  .byte %00000000
+  .byte %00001100
+  .byte %00001000
+  .byte %00000100
+  .byte %00000000
+  .byte %00000000
+  .byte %00000000
+  .byte %00000000
+  .byte %00000000
