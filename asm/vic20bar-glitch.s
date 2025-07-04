@@ -1,6 +1,11 @@
   .include "vic20bootstrap.s"
 
+cr0 = $9000
+cr1 = $9001
+cr2 = $9002
+cr3 = $9003
 rc = $9004
+cr5 = $9005
 ec = $900f
 
 screen = $1e00
@@ -68,15 +73,15 @@ do_row:
   .else
   lda #4
   .endif
-  sta $9000 ; horizontal centering
+  sta cr0 ; horizontal centering
   lda #5
-  sta $9001 ; vertical centering
+  sta cr1 ; vertical centering
   lda #columns | $80
-  sta $9002
+  sta cr2
   lda #rows << 1 | $01
-  sta $9003 ; # rows, set 8x16 char mode
+  sta cr3 ; # rows, set 8x16 char mode
   lda #$fc
-  sta $9005 ; character set starts at $1000
+  sta cr5 ; character set starts at $1000
   lda #$80
   sta $900e ; auxiliary color
 
@@ -91,17 +96,17 @@ rc_zero:
   beq rc_zero
   ; LSB of raster counter is now guaranteed to be zero
   jsr delay ; delay 62 cycles
-  bit $9003
+  bit cr3
   bmi .l
   bit 0
   nop
 .l:
   jsr delay
-  bit $9003
+  bit cr3
   bmi *+2
   bmi *+2
   jsr delay
-  bit $9003
+  bit cr3
   bpl *+2
 
   .ifdef NTSC
