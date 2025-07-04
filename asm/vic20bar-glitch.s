@@ -4,9 +4,9 @@ cr0 = $9000
 cr1 = $9001
 cr2 = $9002
 cr3 = $9003
-rc = $9004
+cr4 = $9004
 cr5 = $9005
-ec = $900f
+crf = $900f
 
 screen = $1e00
 color_ram = $9600
@@ -89,10 +89,10 @@ do_row:
 
 rc_notzero:
   ; Wait until raster is zero
-  lda rc
+  lda cr4
   bne rc_notzero
 rc_zero:
-  cmp rc
+  cmp cr4
   beq rc_zero
   ; LSB of raster counter is now guaranteed to be zero
   jsr delay ; delay 62 cycles
@@ -121,23 +121,23 @@ rc_zero:
 
 loop:
   lda #$8e ; 2
-  sta ec   ; 6
-  stx ec   ; 10
+  sta crf  ; 6
+  stx crf  ; 10
   lda #$aa ; 12
-  sta ec   ; 16
-  stx ec   ; 20
+  sta crf  ; 16
+  stx crf  ; 20
   lda #$cc ; 22
-  sta ec   ; 26
-  stx ec   ; 30
+  sta crf  ; 26
+  stx crf  ; 30
   lda #$9d ; 32
-  sta ec   ; 36
-  stx ec   ; 40
+  sta crf  ; 36
+  stx crf  ; 40
   lda #$fb ; 42
-  sta ec   ; 36
-  stx ec   ; 50
+  sta crf  ; 36
+  stx crf  ; 50
   lda #$ef ; 52 ; secret column (ntsc)
-  sta ec   ; 55
-  stx ec   ; 60
+  sta crf  ; 55
+  stx crf  ; 60
   nop      ; 62
   .ifndef NTSC
   nop      ; 64
