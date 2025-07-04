@@ -82,8 +82,6 @@ do_row:
   sta cr3 ; # rows, set 8x16 char mode
   lda #$fc
   sta cr5 ; character set starts at $1000
-  lda #$80
-  sta $900e ; auxiliary color
 
   sei
 
