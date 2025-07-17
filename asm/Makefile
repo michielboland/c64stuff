@@ -12,7 +12,8 @@ PRG=crunch.prg border.prg sprite.prg sp.prg xhak.prg bc.prg colors.prg pal.prg \
 	calibration-image_ntsc.prg confused.prg confused_ntsc.prg \
 	combined_wave.prg romram.prg filter_log_sweep.prg \
 	filter_log_sweep_ntsc.prg log_sweep.prg log_sweep_ntsc.prg mix.prg \
-	vic20bar-glitch.prg vic20bar-glitch_ntsc.prg
+	vic20bar-glitch.prg vic20bar-glitch_ntsc.prg raster.prg \
+	raster_ntsc.prg
 DEPENDS=bootstrap.s
 all: $(PRG)
 $(PRG): $(DEPENDS)
@@ -33,6 +34,7 @@ confused_ntsc.prg: confused.s
 serial.prg filter_adjust.prg: input_byte.s
 vsp_tester_ntsc.prg: vsp_tester.s
 joytest_ntsc.prg: joytest.s
+raster_ntsc.prg: raster.s
 vic20colorbars_ntsc.prg: vic20colorbars.s
 vic20bar-glitch_ntsc.prg: vic20bar-glitch.s
 vic20colors_ntsc.prg: vic20colors.s
