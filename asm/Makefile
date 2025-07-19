@@ -10,7 +10,7 @@ PRG=crunch.prg border.prg sprite.prg sp.prg xhak.prg bc.prg colors.prg pal.prg \
 	coltest.prg maxtest.crt colorbars-alt.prg fringe.crt joytest_ntsc.prg \
 	sweep.prg filter_adjust.prg serial.prg calibration-image.prg \
 	calibration-image_ntsc.prg confused.prg confused_ntsc.prg \
-	combined_wave.prg romram.prg filter_log_sweep.prg \
+	combined_wave.prg filter_log_sweep.prg \
 	filter_log_sweep_ntsc.prg log_sweep.prg log_sweep_ntsc.prg mix.prg \
 	vic20bar-glitch.prg vic20bar-glitch_ntsc.prg raster.prg \
 	raster_ntsc.prg
