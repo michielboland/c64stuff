@@ -9,44 +9,48 @@ cia1ddrb = $dc03
   sei
   lda #$0b
   sta viccry
-rasneg
-  bit viccry
-  bmi rasneg
-raspos
-  bit viccry
-  bpl raspos
-  nop
-  nop
-  lda #$10
-  sta cia1ddrb
-  lda #0
-  sta cia1ddrb
-  ldy #2
-delay
-  dey
-  bne delay
-  lda viclpx
-  sec
-  sbc #2
-  lsr
-  lsr
-  eor #7
-  lsr
-  bcs *+2
-  lsr
-  bcs *+2
-  bcs *+2
-  lsr
-  bcc loop
+.l0
+  lda vicrc
+  bne .l0
+  lda vicrc
+.l1
+  cmp vicrc
+  beq .l1
+  jsr delay
+  lda vicrc
+  cmp vicrc
+  bne .l2
   bit 0
   nop
+.l2
+  jsr delay
+  lda vicrc
+  cmp vicrc
+  beq *+2
+  beq *+2
+  jsr delay
+  lda vicrc
+  cmp vicrc
+  beq *+2
+
 loop
+  lda vicrc
+  sta vicec ; color register update should coincide with end of hblank
   .ifdef NTSC
   nop
   .endif
-  lda vicrc
-  sta vicec ; color register update should coincide with end of hblank
   .rept 26
   nop
   .endr
   jmp loop
+
+delay
+  ldy #7
+.l0
+  dey
+  bne .l0
+  .ifdef NTSC
+  nop
+  .endif
+  nop
+  rts
