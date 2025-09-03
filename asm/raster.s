@@ -2,9 +2,7 @@
 
 viccry   = $d011
 vicrc    = $d012
-viclpx   = $d013
 vicec    = $d020
-cia1ddrb = $dc03
 
   sei
   lda #$0b
