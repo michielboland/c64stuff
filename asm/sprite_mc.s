@@ -102,21 +102,116 @@ stable
   sta vicse
   lda #0
   ldx #$ff
-  .rept 17
+  .rept 18
   nop
   .endr
-  bit 0
+  stx vicscm
 
-  .rept 21
+  .macro L1
+  ; 1 / 9 / 17
+  .ifdef NTSC
+  nop
+  nop
+  nop
+  .else
+  bit 0
+  .endif
+  nop
+  .rept 4
   sta vicscm
+  stx vicscm
+  .endr
+  sta vicscm
+  .endm
+
+  .macro L23
+  ; 2 / 3 / 10 / 11 / 18 / 19
   .ifdef NTSC
   nop
   .endif
+  bit 0
+  nop
   .rept 5
   stx vicscm
   sta vicscm
   .endr
+  .endm
+
+  .macro L4
+  ; 4 / 12 / 20
+  .ifdef NTSC
+  bit 0
+  .else
+  nop
+  .endif
+  nop
+  nop
+  .rept 5
+  stx vicscm
+  sta vicscm ; NTSC <- write cycle
   .endr
+  .endm
+
+  .macro L5
+  ; 5 / 13 / 21
+  .ifdef NTSC
+  nop
+  nop
+  nop
+  .else
+  bit 0
+  .endif
+  nop
+  .rept 4
+  stx vicscm
+  sta vicscm
+  .endr
+  stx vicscm
+  .endm
+
+  .macro L67
+  ; 6 / 7 / 14 / 15
+  .ifdef NTSC
+  nop
+  .endif
+  bit 0
+  nop
+  .rept 5
+  sta vicscm
+  stx vicscm
+  .endr
+  .endm
+
+  .macro L8
+  ; 8/ 16
+  .ifdef NTSC
+  bit 0
+  .else
+  nop
+  .endif
+  nop
+  nop            ; 14
+  .rept 5
+  sta vicscm
+  stx vicscm
+  .endr
+  .endm
+
+  .rept 2
+  L1
+  L23
+  L23
+  L4
+  L5
+  L67
+  L67
+  L8
+  .endr
+  L1
+  L23
+  L23
+  L4
+  L5
 
   lda #$1b
   sta viccry
