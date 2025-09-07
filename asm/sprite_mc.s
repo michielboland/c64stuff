@@ -268,7 +268,7 @@ init
   dex
   bpl .l3
 
-  lda #$f0
+  lda #$c0
   ldx #62
 .l4
   sta $0340, x
@@ -283,14 +283,14 @@ init
   rts
 
 sp
-  .byte 24, 250
-  .byte 64, 250
-  .byte 104, 250
-  .byte 144, 250
+  .byte 40, 250
+  .byte 76, 250
+  .byte 112, 250
+  .byte 148, 250
   .byte 184, 250
-  .byte 224, 250
-  .byte 8, 250
-  .byte 48, 250
+  .byte 220, 250
+  .byte 0, 250
+  .byte 36, 250
   .byte $c0
 
 colors
