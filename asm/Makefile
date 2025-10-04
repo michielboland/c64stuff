@@ -7,7 +7,8 @@ PRG=crunch.prg sprite.prg sp.prg xhak.prg bc.prg colors.prg pal.prg \
 	calibration-image.prg calibration-image_ntsc.prg confused.prg \
 	confused_ntsc.prg combined_wave.prg filter_log_sweep.prg \
 	filter_log_sweep_ntsc.prg log_sweep.prg log_sweep_ntsc.prg mix.prg \
-	raster.prg raster_ntsc.prg sprite_mc.prg sprite_mc_ntsc.prg
+	raster.prg raster_ntsc.prg sprite_mc.prg sprite_mc_ntsc.prg \
+	stripes.prg
 CRT=color-squares.crt vicii-registers.crt test5.crt sprite_max_coltest.crt \
 	vsp_tester.crt lptest2.crt vsp_tester_ntsc.crt maxtest.crt fringe.crt
 VIC20PRG=vic20colors.prg vic20colorbars.prg vic20colorbars_ntsc.prg \
