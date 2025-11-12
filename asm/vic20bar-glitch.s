@@ -124,7 +124,7 @@ loop:
   lda #$aa ; 12
   sta crf  ; 16
   stx crf  ; 20
-  lda #$cc ; 22
+  lda #$c4 ; 22
   sta crf  ; 26
   stx crf  ; 30
   lda #$9d ; 32
