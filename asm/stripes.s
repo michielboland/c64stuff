@@ -25,6 +25,8 @@
   sta $d01b
   sta $d01c
   sta $d01d
+  lda #9
+  sta $d021
   rts
 
 sprite_positions
