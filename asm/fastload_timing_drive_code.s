@@ -2,8 +2,18 @@ drivecode
 
   sei
 
+  lda #1
+.sync
+  bit pb
+  beq .sync ; wait for data low
+
   ldy #$08
   sty pb ; pull down clock
+
+  ldx #11
+.l0
+  dex
+  bne .l0 ; keep clock low for at least 60 us
 
   ldx #0
 
@@ -13,8 +23,6 @@ drivecode
 
   ldy #$00 ; release clock line
   sty pb
-
-  ldy #$08 ; prepare to pull down clock
 
 .wait2
   lda pb
@@ -36,6 +44,8 @@ drivecode
   and #$0f
   sta pb
 
+  ldy #$08
+  nop
   sty pb ; pull down clock
 
   pla

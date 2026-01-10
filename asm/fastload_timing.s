@@ -3,6 +3,8 @@
 drive  = 8
 ctl    = $6f
 
+stkey  = $91
+
 second = $ff93
 ciout  = $ffa8
 unlsn  = $ffae
@@ -47,8 +49,6 @@ pb     = $1800
   dex
   bne .loop
 
-  sei
-
 .test
   lda #drive
   jsr listen
@@ -66,26 +66,19 @@ pb     = $1800
   jsr ciout
   jsr unlsn
 
+  sei
+
   ldy #$23
   sty pa ; pull down data
 
-  ldx #0
-
 .sync1
-  inx
-  beq .timeout
   bit pa
   bvs .sync1 ; wait for clock low
 
   ldx #0
 
 .next
-
-  ldy #0
-
 .wait2
-  iny
-  beq .timeout
   bit pa
   bvc .wait2 ; wait for clock high
 
@@ -126,11 +119,10 @@ pb     = $1800
   inx
   bne .next
 
-  jmp .test
-
-.timeout
-  lda #2
-  sta $d021
-  jmp *
+  cli
+  nop
+  bit stkey
+  bmi .test
+  rts
 
   .include "fastload_timing_drive_code.s"
