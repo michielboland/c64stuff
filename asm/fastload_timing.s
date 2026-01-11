@@ -7,6 +7,7 @@ counter  = $fb
 runs     = $fd
 
 stkey    = $91
+palnts   = $02a6
 
 linprt   = $bdcd
 second   = $ff93
@@ -108,9 +109,12 @@ actual   = $0400
 .ok
   sty pa ; release data line
 
-  cmp (0,x) ; delay
+  lda #1 ; delay; pal: 20 cycles, ntsc: 21 cycles
+  bit palnts
+  beq *+2
   cmp (0,x)
-  cmp (0,x)
+  nop
+  nop
 
   ldy #$23 ; prepare to pull down data
 
