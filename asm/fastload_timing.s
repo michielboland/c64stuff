@@ -1,19 +1,32 @@
   .include "bootstrap.s"
 
-drive  = 8
-ctl    = $6f
+drive    = 8
+ctl      = $6f
 
-stkey  = $91
+counter  = $fb
+runs     = $fd
 
-second = $ff93
-ciout  = $ffa8
-unlsn  = $ffae
-listen = $ffb1
+stkey    = $91
 
-rc     = $d012
+linprt   = $bdcd
+second   = $ff93
+ciout    = $ffa8
+unlsn    = $ffae
+listen   = $ffb1
+chrout   = $ffd2
+plot     = $fff0
 
-pa     = $dd00
-pb     = $1800
+rc       = $d012
+
+pa       = $dd00
+pb       = $1800
+
+expected = $c000
+actual   = $0400
+
+  jsr compute_expected
+  jsr reset_counters
+  jsr move_cursor
 
   ldx #8
   ldy #0
@@ -114,15 +127,105 @@ pb     = $1800
 
   sty pa ; pull down data
 
-  sta $0400, x
+  sta actual, x
   inc $d020
   inx
   bne .next
 
   cli
-  nop
+  jsr compare
   bit stkey
   bmi .test
   rts
 
   .include "fastload_timing_drive_code.s"
+
+compute_expected
+  ldx #0
+  ldy #0
+.l1
+  lda lsn, x
+  inx
+  .rept 16
+  sta expected, y
+  iny
+  .endr
+  bne .l1
+.l3
+  ldx #0
+.l2
+  lda msn, x
+  .rept 4
+  asl a
+  .endr
+  ora expected, y
+  sta expected, y
+  inx
+  iny
+  cpx #16
+  bcc .l2
+  cpy #0
+  bne .l3
+  rts
+
+reset_counters
+  lda #0
+  sta counter
+  sta counter + 1
+  sta runs
+  sta runs + 1
+  rts
+
+move_cursor
+  sec
+  jsr plot
+  cpx #7
+  bcs .ok
+  ldx #7
+.ok
+  clc
+  jmp plot
+
+compare
+  sec
+  jsr plot
+  ldy #0
+  clc
+  jsr plot
+  ldy #0
+  ldx #0
+.l0
+  lda actual, x
+  cmp expected, x
+  beq .ok
+  iny
+  bne .ok
+  inc counter + 1 ; edge case, all bytes are bad
+.ok
+  inx
+  bne .l0
+  tya
+  clc
+  adc counter
+  sta counter
+  tax
+  lda counter + 1
+  adc #0
+  sta counter + 1
+  jsr linprt
+  inc runs
+  bne .l1
+  inc runs + 1
+.l1
+  lda #'/'
+  jsr chrout
+  ldx runs
+  lda runs + 1
+  jmp linprt
+
+lsn
+  .byte 12, 4, 14, 6, 8, 0, 10, 2
+  .byte 13, 5, 15, 7, 9, 1, 11, 3
+msn
+  .byte 15, 7, 13, 5, 11, 3, 9, 1
+  .byte 14, 6, 12, 4, 10, 2, 8, 0
