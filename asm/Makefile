@@ -14,7 +14,7 @@ CRT=color-squares.crt vicii-registers.crt test5.crt sprite_max_coltest.crt \
 VIC20PRG=vic20colors.prg vic20colorbars.prg vic20colorbars_ntsc.prg \
 	vic20colors_ntsc.prg vic20rasterscan.prg vic20rasterscan_ntsc.prg \
 	vic20size.prg vic20mix.prg vic20bar-glitch.prg \
-	vic20bar-glitch_ntsc.prg
+	vic20bar-glitch_ntsc.prg vic20interlace_test.prg
 DEPENDS=bootstrap.s
 VIC20DEPENDS=vic20bootstrap.s
 all: prg crt vic20prg
