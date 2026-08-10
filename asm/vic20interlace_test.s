@@ -5,10 +5,13 @@ cr1 = $9001
 cr2 = $9002
 cr3 = $9003
 cr4 = $9004
-cr5 = $9005
-cre = $900e
 crf = $900f
 
+  ; workaround for NTSC pivic with PAL ROM
+  lda #5
+  sta cr0
+  lda #25
+  sta cr1
   sei
   lda #<isr
   sta $0314
